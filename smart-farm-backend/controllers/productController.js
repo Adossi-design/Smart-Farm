@@ -1,5 +1,37 @@
 const { Product, User } = require('../models');
 const { Op } = require('sequelize');
+const { createClient } = require('@supabase/supabase-js');
+
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const storageBucket = process.env.SUPABASE_STORAGE_BUCKET || 'product-images';
+const supabase = supabaseUrl && supabaseServiceRoleKey
+  ? createClient(supabaseUrl, supabaseServiceRoleKey)
+  : null;
+
+const uploadToSupabase = async (file) => {
+  if (!file) return null;
+  if (!supabase) {
+    throw new Error('Supabase storage is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
+  }
+
+  const safeName = file.originalname.replace(/[^a-zA-Z0-9.]/g, '_');
+  const objectKey = `products/${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeName}`;
+
+  const { error } = await supabase.storage
+    .from(storageBucket)
+    .upload(objectKey, file.buffer, {
+      contentType: file.mimetype,
+      upsert: false
+    });
+
+  if (error) {
+    throw error;
+  }
+
+  const { data } = supabase.storage.from(storageBucket).getPublicUrl(objectKey);
+  return data?.publicUrl;
+};
 
 exports.getProducts = async (req, res) => {
   try {
@@ -44,7 +76,7 @@ exports.createProduct = async (req, res) => {
     
     let imagePath = imageUrl || req.body.image || '';
     if (req.file) {
-      imagePath = `/uploads/${req.file.filename}`;
+      imagePath = await uploadToSupabase(req.file);
     }
 
     const product = await Product.create({
@@ -91,7 +123,7 @@ exports.updateProduct = async (req, res) => {
     // Image handling
     let imagePath = product.image;
     if (req.file) {
-      imagePath = `/uploads/${req.file.filename}`;
+      imagePath = await uploadToSupabase(req.file);
     } else if (imageUrl) {
       imagePath = imageUrl;
     }
