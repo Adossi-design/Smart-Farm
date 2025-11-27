@@ -2,10 +2,13 @@ const { Sequelize } = require('sequelize');
 const path = require('path');
 require('dotenv').config();
 
-let sequelize;
 
-if (process.env.DATABASE_URL) {
-  // Production: Use PostgreSQL
+
+let sequelize;
+if (process.env.NODE_ENV === 'production' || process.env.DATABASE_URL) {
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL environment variable must be set for production/deployment.');
+  }
   sequelize = new Sequelize(process.env.DATABASE_URL, {
     dialect: 'postgres',
     logging: false,
@@ -17,7 +20,6 @@ if (process.env.DATABASE_URL) {
     }
   });
 } else {
-  // Development: Use SQLite
   sequelize = new Sequelize({
     dialect: 'sqlite',
     storage: path.join(__dirname, '../database.sqlite'),
