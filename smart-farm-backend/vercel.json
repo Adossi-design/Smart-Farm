@@ -3,15 +3,13 @@
   "builds": [
     {
       "src": "server.js",
-      "use": "@vercel/node"
+      "use": "@vercel/node",
+      "config": {
+        "externalPackages": ["pg", "pg-hstore", "sqlite3"],
+        "includeFiles": ["config/**"]
+      }
     }
   ],
-  "functions": {
-    "server.js": {
-      "externalPackages": ["pg", "pg-hstore", "sqlite3"],
-      "includeFiles": "config/**"
-    }
-  },
   "routes": [
     {
       "src": "/(.*)",
