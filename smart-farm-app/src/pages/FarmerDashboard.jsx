@@ -135,7 +135,7 @@ const FarmerDashboard = () => {
 
   const saveProfile = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/profile', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -361,7 +361,7 @@ const FarmerDashboard = () => {
                     <div className="h-40 bg-gray-200 flex items-center justify-center overflow-hidden">
                       {product.image ? (
                         <img 
-                          src={product.image.startsWith('/uploads') ? `http://localhost:5000${product.image}` : product.image} 
+                          src={product.image.startsWith('/uploads') ? `${import.meta.env.VITE_API_BASE_URL}${product.image}` : product.image} 
                           alt={product.name} 
                           className="w-full h-full object-cover"
                         />
@@ -443,7 +443,7 @@ const FarmerDashboard = () => {
                     </div>
                     <p className="text-sm text-gray-500 mb-3">By {item.author?.name || item.author || 'Advisor'} • {item.date ? new Date(item.date).toLocaleDateString() : 'Recent'}</p>
                     {item.image && (
-                      <img src={item.image.startsWith('/uploads') ? `http://localhost:5000${item.image}` : item.image} alt={item.title} className="w-full h-64 object-cover rounded mb-4" />
+                      <img src={item.image.startsWith('/uploads') ? `${import.meta.env.VITE_API_BASE_URL}${item.image}` : item.image} alt={item.title} className="w-full h-64 object-cover rounded mb-4" />
                     )}
                     <div className="text-gray-700" dangerouslySetInnerHTML={{ __html: item.content }}></div>
                   </div>

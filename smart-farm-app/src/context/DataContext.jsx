@@ -12,7 +12,7 @@ export const DataProvider = ({ children }) => {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/products');
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/products`);
       const data = await response.json();
       setProducts(data);
     } catch (error) {
@@ -22,7 +22,7 @@ export const DataProvider = ({ children }) => {
 
   const fetchAdvice = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/advice');
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/advice`);
       const data = await response.json();
       setAdvice(data);
     } catch (error) {
@@ -50,7 +50,7 @@ export const DataProvider = ({ children }) => {
         headers['Content-Type'] = 'application/json';
       }
 
-      const response = await fetch('http://localhost:5000/api/products', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/products`, {
         method: 'POST',
         headers: headers,
         body: isFormData ? productData : JSON.stringify(productData),
@@ -84,7 +84,7 @@ export const DataProvider = ({ children }) => {
         headers['Content-Type'] = 'application/json';
       }
 
-      const response = await fetch('http://localhost:5000/api/advice', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/advice`, {
         method: 'POST',
         headers: headers,
         body: isFormData ? newAdvice : JSON.stringify(newAdvice),
@@ -118,7 +118,7 @@ export const DataProvider = ({ children }) => {
         headers['Content-Type'] = 'application/json';
       }
 
-      const response = await fetch(`http://localhost:5000/api/products/${id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/products/${id}`, {
         method: 'PUT',
         headers: headers,
         body: isFormData ? productData : JSON.stringify(productData),
@@ -142,7 +142,7 @@ export const DataProvider = ({ children }) => {
       const token = user?.token;
       if (!token) return { success: false, message: "Not authenticated" };
 
-      const response = await fetch(`http://localhost:5000/api/products/${id}`, {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/products/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
