@@ -32,7 +32,7 @@ const AdminDashboard = () => {
     const fetchAdminData = async () => {
       if (user?.token) {
         try {
-          const statsRes = await fetch('http://localhost:5000/api/admin/stats', {
+          const statsRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/admin/stats`, {
             headers: { 'Authorization': `Bearer ${user.token}` }
           });
           if (statsRes.ok) {
@@ -40,7 +40,7 @@ const AdminDashboard = () => {
             setStats(statsData);
           }
 
-          const advisorsRes = await fetch('http://localhost:5000/api/admin/advisors', {
+          const advisorsRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/admin/advisors`, {
             headers: { 'Authorization': `Bearer ${user.token}` }
           });
           if (advisorsRes.ok) {
@@ -48,7 +48,7 @@ const AdminDashboard = () => {
             setAdvisors(advisorsData);
           }
 
-          const adminsRes = await fetch('http://localhost:5000/api/admin/admins', {
+          const adminsRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/admin/admins`, {
             headers: { 'Authorization': `Bearer ${user.token}` }
           });
           if (adminsRes.ok) {
@@ -56,7 +56,7 @@ const AdminDashboard = () => {
             setAdmins(adminsData);
           }
 
-          const farmersRes = await fetch('http://localhost:5000/api/admin/farmers', {
+          const farmersRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/admin/farmers`, {
             headers: { 'Authorization': `Bearer ${user.token}` }
           });
           if (farmersRes.ok) {
@@ -85,7 +85,7 @@ const AdminDashboard = () => {
   const handleRegisterAdvisor = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:5000/api/admin/advisors', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/admin/advisors`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -104,7 +104,7 @@ const AdminDashboard = () => {
           password: ''
         });
         // Refresh advisors list
-        const advisorsRes = await fetch('http://localhost:5000/api/admin/advisors', {
+        const advisorsRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/admin/advisors`, {
             headers: { 'Authorization': `Bearer ${user.token}` }
         });
         const advisorsData = await advisorsRes.json();
@@ -121,7 +121,7 @@ const AdminDashboard = () => {
   const handleRegisterAdmin = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:5000/api/admin/admins', {
+      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/admin/admins`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -138,7 +138,7 @@ const AdminDashboard = () => {
           password: ''
         });
         // Refresh admins list
-        const adminsRes = await fetch('http://localhost:5000/api/admin/admins', {
+        const adminsRes = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/admin/admins`, {
             headers: { 'Authorization': `Bearer ${user.token}` }
         });
         const adminsData = await adminsRes.json();

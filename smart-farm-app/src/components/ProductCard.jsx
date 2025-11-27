@@ -1,7 +1,7 @@
 import React from 'react';
 
 const ProductCard = ({ product }) => {
-  const imageUrl = product.image ? (product.image.startsWith('/uploads') ? `http://localhost:5000${product.image}` : product.image) : '';
+  const imageUrl = product.image ? (product.image.startsWith('/uploads') ? `${import.meta.env.VITE_API_BASE_URL}${product.image}` : product.image) : '';
   const message = `Hello, I am interested in your product: ${product.name} listed on Smart Farm. Price: ${product.price}. ${imageUrl ? ` View here: ${imageUrl}` : ''}`;
   const whatsappLink = `https://wa.me/${product.whatsapp}?text=${encodeURIComponent(message)}`;
 
@@ -10,7 +10,7 @@ const ProductCard = ({ product }) => {
       <div className="h-48 bg-gray-200 flex items-center justify-center text-gray-500 overflow-hidden">
         {product.image ? (
           <img
-            src={product.image.startsWith('/uploads') ? `http://localhost:5000${product.image}` : product.image}
+            src={product.image.startsWith('/uploads') ? `${import.meta.env.VITE_API_BASE_URL}${product.image}` : product.image}
             alt={product.name}
             className="w-full h-full object-cover"
           />
