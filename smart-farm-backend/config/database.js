@@ -2,8 +2,13 @@ const { Sequelize } = require('sequelize');
 const path = require('path');
 require('dotenv').config();
 
-// Explicitly require pg so serverless bundles include the Postgres driver
-require('pg');
+// Explicitly require pg + pg-hstore so serverless bundles include them
+const pg = require('pg');
+const PgHStore = require('pg-hstore');
+
+// no-op references to avoid tree-shaking by bundlers
+void pg; // ensures pg stays in the bundle
+void PgHStore; // ensures pg-hstore stays in the bundle
 
 
 
