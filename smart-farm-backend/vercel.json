@@ -6,6 +6,12 @@
       "use": "@vercel/node"
     }
   ],
+  "functions": {
+    "server.js": {
+      "externalPackages": ["pg", "pg-hstore", "sqlite3"],
+      "includeFiles": "config/**"
+    }
+  },
   "routes": [
     {
       "src": "/(.*)",
