@@ -10,15 +10,40 @@ const PgHStore = require('pg-hstore');
 void pg; // ensures pg stays in the bundle
 void PgHStore; // ensures pg-hstore stays in the bundle
 
+const resolvePostgresUrl = () => {
+  const candidates = [
+    process.env.DATABASE_POSTGRES_URL,
+    process.env.POSTGRES_PRISMA_URL,
+    process.env.POSTGRES_URL,
+    process.env.POSTGRES_URL_NON_POOLING
+  ].filter(Boolean);
 
+  if (!candidates.length) {
+    return null;
+  }
 
+  const raw = candidates[0];
+  try {
+    const parsed = new URL(raw);
+    const sslmode = parsed.searchParams.get('sslmode');
+    if (!sslmode || sslmode.toLowerCase() === 'require') {
+      parsed.searchParams.set('sslmode', 'no-verify');
+    }
+    return parsed.toString();
+  } catch (error) {
+    // Fallback: simple string replace if URL parsing fails
+    return raw.replace('sslmode=require', 'sslmode=no-verify');
+  }
+};
+
+const postgresUrl = resolvePostgresUrl();
 
 let sequelize;
-if (process.env.NODE_ENV === 'production' || process.env.DATABASE_POSTGRES_URL) {
-  if (!process.env.DATABASE_POSTGRES_URL) {
-    throw new Error('DATABASE_POSTGRES_URL environment variable must be set for production/deployment.');
+if (process.env.NODE_ENV === 'production' || postgresUrl) {
+  if (!postgresUrl) {
+    throw new Error('A Postgres connection string is required for production/deployment.');
   }
-  sequelize = new Sequelize(process.env.DATABASE_POSTGRES_URL, {
+  sequelize = new Sequelize(postgresUrl, {
     dialect: 'postgres',
     logging: false,
     dialectOptions: {
