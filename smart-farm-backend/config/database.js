@@ -2,6 +2,10 @@ const { Sequelize } = require('sequelize');
 const path = require('path');
 require('dotenv').config();
 
+// Explicitly require pg so serverless bundles include the Postgres driver
+require('pg');
+
+
 
 
 let sequelize;
