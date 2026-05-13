@@ -21,7 +21,7 @@ const User = sequelize.define('User', {
     allowNull: false
   },
   role: {
-    type: DataTypes.ENUM('farmer', 'advisor', 'admin'),
+    type: DataTypes.ENUM('farmer', 'admin', 'buyer'),
     defaultValue: 'farmer'
   },
   phone: {
@@ -31,10 +31,26 @@ const User = sequelize.define('User', {
     type: DataTypes.STRING
   },
   organization: {
-    type: DataTypes.STRING // For advisors
+    type: DataTypes.STRING // Optional profile field
   },
   specialization: {
-    type: DataTypes.STRING // For advisors
+    type: DataTypes.STRING // Optional profile field
+  },
+  profession: {
+    type: DataTypes.STRING, // For sellers: farmer, butcher, fisher, etc.
+    allowNull: true
+  },
+  profileImage: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  averageRating: {
+    type: DataTypes.FLOAT,
+    defaultValue: 0
+  },
+  totalReviews: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
   }
 });
 
