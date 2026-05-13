@@ -2,25 +2,34 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
+import { useTranslation } from 'react-i18next';
+import { DEFAULT_PRODUCT_CATEGORIES, getProductCategories } from '../constants/categories';
+import ProfileAvatarPicker from '../components/ProfileAvatarPicker';
 
 const FarmerDashboard = () => {
-  const { user, logout } = useAuth();
-  const { advice, products, addProduct, updateProduct, deleteProduct } = useData();
+  const { user, logout, updateUser } = useAuth();
+  const { products, addProduct, updateProduct, deleteProduct } = useData();
+  const { t } = useTranslation();
   const [activeView, setActiveView] = useState('dashboard');
   
   // Profile Editing State
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({});
+  const [profileAvatar, setProfileAvatar] = useState(null);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [productSearch, setProductSearch] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
 
   const [editingProductId, setEditingProductId] = useState(null);
   const [newProduct, setNewProduct] = useState({
     name: '',
-    category: 'Vegetables',
+    category: DEFAULT_PRODUCT_CATEGORIES[0],
     price: '',
     quantity: '',
+    unit: 'kg',
+    quantityAvailable: '',
     location: '',
-    description: '',
-    whatsapp: user?.phone || ''
+    description: ''
   });
   const [imageFile, setImageFile] = useState(null);
   const [imageInputMethod, setImageInputMethod] = useState('file'); // 'file' or 'url'
@@ -42,10 +51,12 @@ const FarmerDashboard = () => {
     formData.append('name', newProduct.name);
     formData.append('category', newProduct.category);
     formData.append('price', newProduct.price);
-    formData.append('quantity', newProduct.quantity);
+    // send structured quantity fields
+    formData.append('quantity', newProduct.quantity || `${newProduct.quantityAvailable} ${newProduct.unit}`);
+    formData.append('quantityAvailable', newProduct.quantityAvailable);
+    formData.append('unit', newProduct.unit);
     formData.append('location', newProduct.location);
     formData.append('description', newProduct.description);
-    formData.append('whatsapp', newProduct.whatsapp);
     
     if (imageInputMethod === 'file' && imageFile) {
       formData.append('image', imageFile);
@@ -61,15 +72,14 @@ const FarmerDashboard = () => {
     }
     
     if (result.success) {
-      alert(editingProductId ? 'Product Updated Successfully!' : 'Product Published Successfully!');
+      alert(editingProductId ? t('seller.productUpdated') : t('seller.productPublished'));
       setNewProduct({
         name: '',
-        category: 'Vegetables',
+        category: DEFAULT_PRODUCT_CATEGORIES[0],
         price: '',
         quantity: '',
         location: '',
-        description: '',
-        whatsapp: user?.phone || ''
+        description: ''
       });
       setImageFile(null);
       setImageUrl('');
@@ -77,7 +87,7 @@ const FarmerDashboard = () => {
       setEditingProductId(null);
       if (editingProductId) setActiveView('my-products');
     } else {
-      alert(result.message || (editingProductId ? 'Failed to update product.' : 'Failed to publish product.'));
+      alert(result.message || (editingProductId ? t('seller.updateFailed') : t('seller.publishFailed')));
     }
   };
 
@@ -88,8 +98,7 @@ const FarmerDashboard = () => {
       price: product.price,
       quantity: product.quantity,
       location: product.location,
-      description: product.description,
-      whatsapp: product.whatsapp
+      description: product.description
     });
     
     // Handle image pre-filling logic if needed, or just leave blank to keep existing
@@ -109,12 +118,12 @@ const FarmerDashboard = () => {
   };
 
   const handleDeleteClick = async (id) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
+    if (window.confirm(t('seller.deleteConfirm'))) {
       const result = await deleteProduct(id);
       if (result.success) {
-        alert('Product deleted successfully');
+        alert(t('seller.productDeleted'));
       } else {
-        alert(result.message || 'Failed to delete product');
+        alert(result.message || t('seller.deleteFailed'));
       }
     }
   };
@@ -134,31 +143,56 @@ const FarmerDashboard = () => {
   };
 
   const saveProfile = async () => {
+    setSavingProfile(true);
     try {
+      const formData = new FormData();
+      formData.append('name', editData.name || '');
+      formData.append('email', editData.email || '');
+      formData.append('phone', editData.phone || '');
+      formData.append('location', editData.location || '');
+      if (profileAvatar) formData.append('avatar', profileAvatar);
+
       const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/profile`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${user.token}`
         },
-        body: JSON.stringify(editData)
+        body: formData
       });
       
       if (response.ok) {
         const updatedUser = await response.json();
-        localStorage.setItem('smartFarmUser', JSON.stringify(updatedUser));
-        alert('Profile updated! Please refresh the page to see changes.');
+        updateUser({ ...user, ...updatedUser, token: updatedUser.token || user.token });
+        setProfileAvatar(null);
+        alert(t('profile.profileUpdated'));
         setIsEditing(false);
-        window.location.reload();
       } else {
-        alert('Failed to update profile');
+        alert(t('profile.profileUpdateFailed'));
       }
     } catch (error) {
       console.error(error);
+    } finally {
+      setSavingProfile(false);
     }
   };
 
   const myProducts = products.filter(p => p.sellerId === user?.id);
+  const categoryOptions = getProductCategories(products);
+  const filteredMyProducts = myProducts.filter((product) => {
+    const search = productSearch.trim().toLowerCase();
+    const matchesSearch = !search || [product.name, product.category, product.location, product.description]
+      .filter(Boolean)
+      .some(field => String(field).toLowerCase().includes(search));
+    const matchesCategory = categoryFilter === 'all' || (product.category || '').toLowerCase() === categoryFilter.toLowerCase();
+    return matchesSearch && matchesCategory;
+  });
+  const sidebarItems = [
+    { id: 'dashboard', label: t('nav.dashboard'), icon: 'home' },
+    { id: 'post-product', label: t('seller.addProduct'), icon: 'plus-circle' },
+    { id: 'my-products', label: t('seller.myProducts'), icon: 'boxes' },
+    { id: 'weather', label: t('farmer.weather'), icon: 'cloud-sun' },
+    { id: 'profile', label: t('common.profile'), icon: 'user-circle' },
+  ];
 
   const renderContent = () => {
     switch(activeView) {
@@ -166,145 +200,148 @@ const FarmerDashboard = () => {
         return (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Post Product Form */}
-            <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
-              <h2 className="text-xl font-bold text-dark-green mb-6">{editingProductId ? 'Edit Product' : 'Post New Product'}</h2>
-              <form className="space-y-4" onSubmit={handleSubmit}>
+            <div className="lg:col-span-2 rounded-2xl bg-slate-800/50 border border-slate-700 p-8 backdrop-blur-sm">
+              <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
+                <i className="fas fa-plus-circle text-emerald-400"></i> {editingProductId ? t('seller.editProduct') : t('seller.addProduct')}
+              </h2>
+              <p className="text-slate-400 mb-6">{t('farmer.shareHarvest')}</p>
+              <form className="space-y-5" onSubmit={handleSubmit}>
                 <div>
-                  <label className="block text-gray-700 font-medium mb-1">Product Name</label>
+                  <label className="block text-slate-300 font-medium mb-2">{t('seller.productName')}</label>
                   <input 
                     type="text" 
                     name="name"
                     value={newProduct.name}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border rounded focus:outline-none focus:border-primary-green" 
-                    placeholder="e.g. Organic Potatoes" 
+                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all duration-200"
+                    placeholder={t('farmer.productNamePlaceholder')} 
                     required
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-gray-700 font-medium mb-1">Category</label>
+                    <label className="block text-slate-300 font-medium mb-2">{t('seller.category')}</label>
                     <select 
                       name="category"
                       value={newProduct.category}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border rounded focus:outline-none focus:border-primary-green"
+                      className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all duration-200"
                     >
-                      <option>Vegetables</option>
-                      <option>Fruits</option>
-                      <option>Grains</option>
-                      <option>Livestock</option>
+                      {categoryOptions.map((category) => (
+                        <option key={category} value={category}>{category}</option>
+                      ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-gray-700 font-medium mb-1">Price per Unit</label>
+                    <label className="block text-slate-300 font-medium mb-2">{t('seller.price')}</label>
                     <input 
                       type="text" 
                       name="price"
                       value={newProduct.price}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border rounded focus:outline-none focus:border-primary-green" 
-                      placeholder="e.g. 500 RWF" 
+                      className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all duration-200"
+                      placeholder={t('farmer.pricePlaceholder')} 
                       required
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-gray-700 font-medium mb-1">Quantity Available</label>
+                    <label className="block text-slate-300 font-medium mb-2">{t('seller.quantity')}</label>
                     <input 
-                      type="text" 
-                      name="quantity"
-                      value={newProduct.quantity}
+                      type="number" 
+                      name="quantityAvailable"
+                      value={newProduct.quantityAvailable}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border rounded focus:outline-none focus:border-primary-green" 
-                      placeholder="e.g. 100 kg" 
+                      className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all duration-200"
+                      placeholder={t('farmer.quantityPlaceholder')} 
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-gray-700 font-medium mb-1">Location</label>
+                    <label className="block text-slate-300 font-medium mb-2">{t('seller.unit')}</label>
+                    <select name="unit" value={newProduct.unit} onChange={handleInputChange} className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-emerald-500">
+                      <option value="kg">kg</option>
+                      <option value="g">g</option>
+                      <option value="ton">ton</option>
+                      <option value="piece">piece</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 font-medium mb-2">{t('seller.location')}</label>
                     <input 
                       type="text" 
                       name="location"
                       value={newProduct.location}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-2 border rounded focus:outline-none focus:border-primary-green" 
-                      placeholder="e.g. Musanze" 
+                      className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all duration-200"
+                      placeholder={t('farmer.locationPlaceholder')} 
                       required
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-gray-700 font-medium mb-1">Description</label>
+                  <label className="block text-slate-300 font-medium mb-2">{t('seller.description')}</label>
                   <textarea 
                     rows="4" 
                     name="description"
                     value={newProduct.description}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border rounded focus:outline-none focus:border-primary-green" 
-                    placeholder="Describe your product..."
+                    className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all duration-200 resize-none"
+                    placeholder={t('farmer.descriptionPlaceholder')}
                     required
                   ></textarea>
                 </div>
                 <div>
-                  <label className="block text-gray-700 font-medium mb-1">WhatsApp Number</label>
-                  <input 
-                    type="text" 
-                    name="whatsapp"
-                    value={newProduct.whatsapp}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border rounded focus:outline-none focus:border-primary-green" 
-                    placeholder="e.g. 250788123456" 
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 font-medium mb-1">Product Image</label>
-                  
-                  <div className="flex gap-4 mb-2">
-                    <label className="flex items-center gap-2 cursor-pointer">
+                  <label className="block text-slate-300 font-medium mb-3">{t('seller.image')}</label>
+                  <div className="flex gap-4 mb-4 bg-slate-700/50 p-3 rounded-lg">
+                    <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-emerald-400 transition-colors">
                       <input 
                         type="radio" 
                         name="imageMethod" 
                         value="file" 
                         checked={imageInputMethod === 'file'} 
                         onChange={() => setImageInputMethod('file')}
-                        className="text-primary-green focus:ring-primary-green"
+                        className="text-emerald-500"
                       />
-                      <span>Upload File</span>
+                      <i className="fas fa-upload"></i>
+                      <span>{t('farmer.uploadFile')}</span>
                     </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
+                    <label className="flex items-center gap-2 cursor-pointer text-slate-300 hover:text-emerald-400 transition-colors">
                       <input 
                         type="radio" 
                         name="imageMethod" 
                         value="url" 
                         checked={imageInputMethod === 'url'} 
                         onChange={() => setImageInputMethod('url')}
-                        className="text-primary-green focus:ring-primary-green"
+                        className="text-emerald-500"
                       />
-                      <span>Image URL</span>
+                      <i className="fas fa-link"></i>
+                      <span>{t('farmer.imageUrl')}</span>
                     </label>
                   </div>
 
                   {imageInputMethod === 'file' ? (
                     <input 
                       type="file" 
-                      className="w-full" 
+                      className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-slate-300 file:text-emerald-400 file:bg-slate-800 file:border-0 file:px-3 file:py-2 file:rounded file:mr-3 focus:outline-none focus:border-emerald-500" 
                       onChange={handleFileChange}
                       accept="image/*"
                     />
                   ) : (
                     <input 
                       type="url" 
-                      className="w-full px-4 py-2 border rounded focus:outline-none focus:border-primary-green" 
-                      placeholder="https://example.com/image.jpg"
+                      className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all duration-200"
+                      placeholder={t('farmer.imageUrlPlaceholder')}
                       value={imageUrl}
                       onChange={(e) => setImageUrl(e.target.value)}
                     />
                   )}
                 </div>
-                <button type="submit" className="w-full bg-primary-green text-white py-2 rounded font-bold hover:bg-dark-green transition">{editingProductId ? 'Update Product' : 'Publish Product'}</button>
+                <button type="submit" className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white py-3 rounded-lg font-bold transition-all duration-200 flex items-center justify-center gap-2">
+                  <i className={`fas ${editingProductId ? 'fa-sync' : 'fa-paper-plane'}`}></i>
+                  {editingProductId ? t('seller.editProduct') : t('seller.addProduct')}
+                </button>
                 {editingProductId && (
                   <button 
                     type="button" 
@@ -312,53 +349,67 @@ const FarmerDashboard = () => {
                       setEditingProductId(null);
                       setNewProduct({
                         name: '',
-                        category: 'Vegetables',
+                        category: DEFAULT_PRODUCT_CATEGORIES[0],
                         price: '',
                         quantity: '',
                         location: '',
-                        description: '',
-                        whatsapp: user?.phone || ''
+                        description: ''
                       });
                       setImageFile(null);
                       setImageUrl('');
                       setImageInputMethod('file');
                     }}
-                    className="w-full bg-gray-500 text-white py-2 rounded font-bold hover:bg-gray-600 transition mt-2"
+                    className="w-full bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-lg font-bold transition-all duration-200"
                   >
-                    Cancel Edit
+                    {t('common.cancel')}
                   </button>
                 )}
               </form>
             </div>
 
-            {/* Advisory Feed */}
-            <div>
-              <h2 className="text-xl font-bold text-gray-800 mb-6">Latest Advice</h2>
-              <div className="space-y-4">
-                {advice.slice(0, 3).map(item => (
-                  <div key={item.id} className="bg-white p-4 rounded-lg shadow-md border-l-4 border-primary-green">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="bg-light-green text-dark-green px-2 py-1 rounded-full text-xs font-bold">{item.category}</span>
-                      <small className="text-gray-500">{item.date}</small>
-                    </div>
-                    <h4 className="font-bold mb-1">{item.title}</h4>
-                    <div className="text-sm text-gray-600 mb-2 line-clamp-3" dangerouslySetInnerHTML={{ __html: item.content }}></div>
-                    <button onClick={() => setActiveView('advice')} className="text-primary-green text-sm font-bold hover:underline">Read More</button>
-                  </div>
-                ))}
-              </div>
-            </div>
+
+          </div>
+        );
+      case 'post-product':
+        return (
+          <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-8 backdrop-blur-sm max-w-3xl">
+            <h2 className="text-2xl font-bold text-white mb-6">{t('farmer.postProductTitle')}</h2>
+            <p className="text-slate-300 mb-8">{t('farmer.postProductDesc')}</p>
+            {/* Reuse the form from dashboard - you can extract it into a separate component if needed */}
+            <p className="text-slate-400">{t('farmer.useDashboardToPost')}</p>
           </div>
         );
       case 'my-products':
         return (
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-bold text-dark-green mb-6">My Products</h2>
-            {myProducts.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {myProducts.map(product => (
-                  <div key={product.id} className="border rounded-lg overflow-hidden shadow-sm">
-                    <div className="h-40 bg-gray-200 flex items-center justify-center overflow-hidden">
+          <div>
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+              <i className="fas fa-boxes text-emerald-400"></i> {t('seller.myProducts')}
+            </h2>
+            {filteredMyProducts.length > 0 ? (
+              <>
+                <div className="mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex items-center gap-3 w-full sm:w-auto">
+                    <input
+                      type="text"
+                      value={productSearch}
+                      onChange={(e) => setProductSearch(e.target.value)}
+                      placeholder={t('farmer.searchProductsPlaceholder')}
+                      className="w-full sm:w-72 px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400"
+                    />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white">
+                      <option value="all">{t('buyer.allCategories')}</option>
+                      {categoryOptions.map((category) => (
+                        <option key={category} value={category}>{category}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-6 [&>*]:h-full">
+                {filteredMyProducts.map(product => (
+                  <div key={product.id} className="group rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 overflow-hidden hover:border-emerald-500/50 hover:shadow-lg hover:shadow-emerald-500/10 transition-all duration-300 transform hover:scale-105">
+                    <div className="h-48 bg-slate-700 flex items-center justify-center overflow-hidden relative">
                       {product.image ? (
                         <img 
                           src={product.image.startsWith('/uploads') ? `${import.meta.env.VITE_API_BASE_URL}${product.image}` : product.image} 
@@ -366,62 +417,94 @@ const FarmerDashboard = () => {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <i className="fas fa-box fa-3x text-gray-400"></i>
+                        <i className="fas fa-box fa-4x text-slate-600"></i>
                       )}
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     </div>
-                    <div className="p-4">
-                      <h3 className="font-bold text-lg">{product.name}</h3>
-                      <p className="text-primary-green font-bold">{product.price}</p>
-                      <p className="text-sm text-gray-600 mt-1">Qty: {product.quantity}</p>
-                      <div className="mt-3 flex justify-between">
-                        <button onClick={() => handleEditClick(product)} className="text-blue-500 hover:text-blue-700"><i className="fas fa-edit"></i> Edit</button>
-                        <button onClick={() => handleDeleteClick(product.id)} className="text-red-500 hover:text-red-700"><i className="fas fa-trash"></i> Delete</button>
+                    <div className="p-5">
+                      <h3 className="font-bold text-lg text-white mb-2 line-clamp-2">{product.name}</h3>
+                      <p className="text-emerald-400 font-bold text-lg mb-3">{product.price}</p>
+                      <div className="flex items-center justify-between mb-4 text-sm">
+                        <span className="text-slate-400">
+                          <i className="fas fa-cube mr-1"></i>
+                          {product.quantity}
+                        </span>
+                        <span className="text-slate-400">
+                          <i className="fas fa-map-marker-alt mr-1 text-amber-400"></i>
+                          {product.category}
+                        </span>
+                      </div>
+                      <div className="flex gap-3">
+                        <button 
+                          onClick={() => handleEditClick(product)} 
+                          className="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2"
+                        >
+                          <i className="fas fa-edit"></i> {t('common.edit')}
+                        </button>
+                        <button 
+                          onClick={() => handleDeleteClick(product.id)} 
+                          className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white py-2 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2"
+                        >
+                          <i className="fas fa-trash"></i> {t('common.delete')}
+                        </button>
                       </div>
                     </div>
                   </div>
                 ))}
               </div>
+              </>
             ) : (
-              <p className="text-gray-500">You haven't posted any products yet.</p>
+              <div className="text-center py-16 rounded-2xl bg-slate-800/50 border border-slate-700">
+                <i className="fas fa-inbox text-5xl text-slate-600 mb-4"></i>
+                <p className="text-slate-300 text-lg">{t('seller.noProducts')}</p>
+                <p className="text-slate-500 text-sm mt-2">{t('farmer.useDashboardToPost')}</p>
+              </div>
             )}
           </div>
         );
       case 'weather':
         return (
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-bold text-dark-green mb-6">Weather Forecast</h2>
-            <div className="bg-blue-50 p-6 rounded-lg border border-blue-100">
+          <div>
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+              <i className="fas fa-cloud-sun text-yellow-400"></i> {t('advisor.weatherForecast')}
+            </h2>
+            <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-8 backdrop-blur-sm">
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-800">Musanze, Rwanda</h3>
-                  <p className="text-gray-600">Monday, 24 November 2025</p>
+                  <h3 className="text-3xl font-bold text-white">{t('farmer.defaultCity')}</h3>
+                  <p className="text-slate-400 text-lg">{t('farmer.defaultDate')}</p>
                 </div>
-                <div className="text-right">
-                  <i className="fas fa-cloud-sun fa-4x text-yellow-500"></i>
-                </div>
+                <i className="fas fa-cloud-sun fa-5x text-yellow-400 opacity-80"></i>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-                <div className="bg-white p-4 rounded shadow-sm">
-                  <p className="text-gray-500">Temperature</p>
-                  <p className="text-3xl font-bold text-gray-800">24°C</p>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <div className="bg-slate-700/50 rounded-xl p-4 border border-slate-600">
+                  <p className="text-slate-400 text-sm mb-2">{t('farmer.temperature')}</p>
+                  <p className="text-3xl font-bold text-emerald-400">24°C</p>
                 </div>
-                <div className="bg-white p-4 rounded shadow-sm">
-                  <p className="text-gray-500">Humidity</p>
-                  <p className="text-3xl font-bold text-gray-800">65%</p>
+                <div className="bg-slate-700/50 rounded-xl p-4 border border-slate-600">
+                  <p className="text-slate-400 text-sm mb-2">{t('farmer.humidity')}</p>
+                  <p className="text-3xl font-bold text-cyan-400">65%</p>
                 </div>
-                <div className="bg-white p-4 rounded shadow-sm">
-                  <p className="text-gray-500">Wind Speed</p>
-                  <p className="text-3xl font-bold text-gray-800">12 km/h</p>
+                <div className="bg-slate-700/50 rounded-xl p-4 border border-slate-600">
+                  <p className="text-slate-400 text-sm mb-2">{t('farmer.windSpeed')}</p>
+                  <p className="text-3xl font-bold text-blue-400">12 km/h</p>
+                </div>
+                <div className="bg-slate-700/50 rounded-xl p-4 border border-slate-600">
+                  <p className="text-slate-400 text-sm mb-2">{t('farmer.rainChance')}</p>
+                  <p className="text-3xl font-bold text-purple-400">15%</p>
                 </div>
               </div>
               <div className="mt-8">
-                <h4 className="font-bold text-gray-800 mb-4">Weekly Forecast</h4>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <h4 className="font-bold text-white mb-4 flex items-center gap-2">
+                  <i className="fas fa-calendar-days"></i> {t('farmer.weeklyForecast')}
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                   {['Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
-                    <div key={index} className="bg-white p-3 rounded text-center shadow-sm">
-                      <p className="font-bold text-gray-600">{day}</p>
-                      <i className={`fas ${index % 2 === 0 ? 'fa-sun text-yellow-500' : 'fa-cloud-rain text-blue-500'} fa-2x my-2`}></i>
-                      <p className="font-bold">{22 + index}°C</p>
+                    <div key={index} className="bg-slate-700/50 p-4 rounded-lg text-center border border-slate-600 hover:border-slate-500 transition-colors">
+                      <p className="font-bold text-slate-300 mb-2">{day}</p>
+                      <i className={`fas ${index % 2 === 0 ? 'fa-sun text-yellow-400' : 'fa-cloud-rain text-cyan-400'} fa-2x mb-2`}></i>
+                      <p className="font-bold text-white">{22 + index}°C</p>
+                      <p className="text-slate-500 text-xs mt-1">{Math.floor(Math.random() * 30)}% rain</p>
                     </div>
                   ))}
                 </div>
@@ -429,85 +512,89 @@ const FarmerDashboard = () => {
             </div>
           </div>
         );
-      case 'advice':
-        return (
-          <div className="bg-white p-6 rounded-lg shadow-md">
-            <h2 className="text-xl font-bold text-dark-green mb-6">Advisory Tips</h2>
-            {advice.length > 0 ? (
-              <div className="space-y-6">
-                {advice.map(item => (
-                  <div key={item.id} className="border-b pb-6 last:border-0">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="text-lg font-bold text-gray-800">{item.title}</h3>
-                      <span className="bg-light-green text-dark-green px-3 py-1 rounded-full text-xs font-bold">{item.category}</span>
-                    </div>
-                    <p className="text-sm text-gray-500 mb-3">By {item.author?.name || item.author || 'Advisor'} • {item.date ? new Date(item.date).toLocaleDateString() : 'Recent'}</p>
-                    {item.image && (
-                      <img src={item.image.startsWith('/uploads') ? `${import.meta.env.VITE_API_BASE_URL}${item.image}` : item.image} alt={item.title} className="w-full h-64 object-cover rounded mb-4" />
-                    )}
-                    <div className="text-gray-700" dangerouslySetInnerHTML={{ __html: item.content }}></div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500">No advisory tips available at the moment.</p>
-            )}
-          </div>
-        );
       case 'profile':
         return (
-          <div className="bg-white p-6 rounded-lg shadow-md max-w-2xl mx-auto">
-            <h2 className="text-xl font-bold text-dark-green mb-6">My Profile</h2>
-            <div className="flex items-center gap-6 mb-8">
-              <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center text-gray-400">
-                <i className="fas fa-user fa-4x"></i>
+          <div className="max-w-3xl">
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+              <i className="fas fa-user-circle text-emerald-400"></i> {t('seller.myProfile')}
+            </h2>
+            <div className="rounded-2xl bg-slate-800/50 border border-slate-700 p-8 backdrop-blur-sm">
+              <div className="flex items-center gap-6 mb-8">
+                {user?.profileImage ? (
+                  <img
+                    src={user.profileImage.startsWith('/uploads') ? `${import.meta.env.VITE_API_BASE_URL}${user.profileImage}` : user.profileImage}
+                    alt={user?.name}
+                    className="w-24 h-24 rounded-full object-cover border-2 border-emerald-400 flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-24 h-24 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-full flex items-center justify-center text-white text-4xl font-bold flex-shrink-0">
+                    {user?.name?.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <h3 className="text-3xl font-bold text-white">{user?.name}</h3>
+                  <p className="text-emerald-400 text-lg font-medium capitalize">{t('farmer.accountLabel', { role: user?.role })}</p>
+                  <p className="text-slate-400 mt-2"><i className="fas fa-envelope mr-2"></i>{user?.email}</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-2xl font-bold text-gray-800">{user?.name}</h3>
-                <p className="text-gray-600">{user?.role}</p>
-              </div>
+              
+              {isEditing ? (
+                <div className="space-y-5">
+                  <ProfileAvatarPicker
+                    title={t('profile.profilePicture')}
+                    imageUrl={user?.profileImage ? (user.profileImage.startsWith('/uploads') ? `${import.meta.env.VITE_API_BASE_URL}${user.profileImage}` : user.profileImage) : ''}
+                    fallbackText={user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                    file={profileAvatar}
+                    onFileChange={setProfileAvatar}
+                    fileLabel={t('buyer.uploadImage')}
+                    hint={t('buyer.selectImage')}
+                    compact
+                  />
+                  <div>
+                    <label className="block text-slate-300 font-medium mb-2">{t('register.fullName')}</label>
+                    <input type="text" name="name" value={editData.name} onChange={handleProfileChange} className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all duration-200" />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 font-medium mb-2">{t('buyer.email')}</label>
+                    <input type="email" name="email" value={editData.email} onChange={handleProfileChange} className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all duration-200" />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 font-medium mb-2">{t('buyer.phone')}</label>
+                    <input type="text" name="phone" value={editData.phone} onChange={handleProfileChange} className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all duration-200" />
+                  </div>
+                  <div>
+                    <label className="block text-slate-300 font-medium mb-2">{t('buyer.location')}</label>
+                    <input type="text" name="location" value={editData.location} onChange={handleProfileChange} className="w-full px-4 py-3 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all duration-200" />
+                  </div>
+                  <div className="flex gap-4 mt-6 pt-6 border-t border-slate-700">
+                    <button onClick={saveProfile} disabled={savingProfile} className="flex-1 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-3 rounded-lg font-bold transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-60">
+                      <i className="fas fa-check"></i> {savingProfile ? t('profile.saving') : t('profile.saveChanges')}
+                    </button>
+                    <button onClick={() => setIsEditing(false)} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-6 py-3 rounded-lg font-bold transition-all duration-200">
+                      {t('common.cancel')}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="bg-slate-700/50 rounded-lg p-4 border border-slate-600">
+                    <label className="block text-slate-400 text-sm mb-1">{t('buyer.email')}</label>
+                    <p className="font-medium text-white">{user?.email}</p>
+                  </div>
+                  <div className="bg-slate-700/50 rounded-lg p-4 border border-slate-600">
+                    <label className="block text-slate-400 text-sm mb-1">{t('buyer.phone')}</label>
+                    <p className="font-medium text-white">{user?.phone || <span className="text-slate-500">{t('profile.notSet')}</span>}</p>
+                  </div>
+                  <div className="bg-slate-700/50 rounded-lg p-4 border border-slate-600">
+                    <label className="block text-slate-400 text-sm mb-1">{t('buyer.location')}</label>
+                    <p className="font-medium text-white">{user?.location || <span className="text-slate-500">{t('profile.notSet')}</span>}</p>
+                  </div>
+                  <button onClick={handleEditProfile} className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white px-6 py-3 rounded-lg font-bold transition-all duration-200 mt-6 flex items-center justify-center gap-2">
+                    <i className="fas fa-edit"></i> {t('profile.editProfile')}
+                  </button>
+                </div>
+              )}
             </div>
-            
-            {isEditing ? (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-gray-700 font-medium mb-1">Full Name</label>
-                  <input type="text" name="name" value={editData.name} onChange={handleProfileChange} className="w-full px-4 py-2 border rounded" />
-                </div>
-                <div>
-                  <label className="block text-gray-700 font-medium mb-1">Email</label>
-                  <input type="email" name="email" value={editData.email} onChange={handleProfileChange} className="w-full px-4 py-2 border rounded" />
-                </div>
-                <div>
-                  <label className="block text-gray-700 font-medium mb-1">Phone</label>
-                  <input type="text" name="phone" value={editData.phone} onChange={handleProfileChange} className="w-full px-4 py-2 border rounded" />
-                </div>
-                <div>
-                  <label className="block text-gray-700 font-medium mb-1">Location</label>
-                  <input type="text" name="location" value={editData.location} onChange={handleProfileChange} className="w-full px-4 py-2 border rounded" />
-                </div>
-                <div className="flex gap-4 mt-4">
-                  <button onClick={saveProfile} className="bg-primary-green text-white px-6 py-2 rounded font-bold hover:bg-dark-green transition">Save Changes</button>
-                  <button onClick={() => setIsEditing(false)} className="bg-gray-500 text-white px-6 py-2 rounded font-bold hover:bg-gray-600 transition">Cancel</button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-gray-500 text-sm">Email</label>
-                  <p className="font-medium text-gray-800">{user?.email}</p>
-                </div>
-                <div>
-                  <label className="block text-gray-500 text-sm">Phone</label>
-                  <p className="font-medium text-gray-800">{user?.phone || 'Not set'}</p>
-                </div>
-                <div>
-                  <label className="block text-gray-500 text-sm">Location</label>
-                  <p className="font-medium text-gray-800">{user?.location || 'Not set'}</p>
-                </div>
-                <button onClick={handleEditProfile} className="bg-primary-green text-white px-6 py-2 rounded font-bold hover:bg-dark-green transition mt-4">Edit Profile</button>
-              </div>
-            )}
           </div>
         );
       default:
@@ -516,68 +603,129 @@ const FarmerDashboard = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-green-50">
-      {/* Sidebar */}
-      <aside className="w-64 bg-dark-green hidden md:block">
-        <div className="p-6">
-          <Link to="/" className="text-2xl font-bold text-white flex items-center gap-2">
-            <i className="fas fa-leaf"></i> Smart Farm
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b border-slate-700 bg-slate-900/80 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-lg flex items-center justify-center">
+              <i className="fas fa-leaf text-white"></i>
+            </div>
+            <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-emerald-600">
+              Smart Farm
+            </h1>
           </Link>
-        </div>
-        <nav className="mt-6">
-          <button onClick={() => setActiveView('dashboard')} className={`w-full flex items-center px-6 py-3 ${activeView === 'dashboard' ? 'bg-primary-green text-white border-r-4 border-white' : 'text-green-100 hover:bg-primary-green hover:text-white'}`}>
-            <i className="fas fa-home w-6"></i> Dashboard
-          </button>
-          <button onClick={() => setActiveView('post-product')} className={`w-full flex items-center px-6 py-3 ${activeView === 'post-product' ? 'bg-primary-green text-white border-r-4 border-white' : 'text-green-100 hover:bg-primary-green hover:text-white'}`}>
-            <i className="fas fa-plus-circle w-6"></i> Post Product
-          </button>
-          <button onClick={() => setActiveView('my-products')} className={`w-full flex items-center px-6 py-3 ${activeView === 'my-products' ? 'bg-primary-green text-white border-r-4 border-white' : 'text-green-100 hover:bg-primary-green hover:text-white'}`}>
-            <i className="fas fa-list w-6"></i> My Products
-          </button>
-          <button onClick={() => setActiveView('weather')} className={`w-full flex items-center px-6 py-3 ${activeView === 'weather' ? 'bg-primary-green text-white border-r-4 border-white' : 'text-green-100 hover:bg-primary-green hover:text-white'}`}>
-            <i className="fas fa-cloud-sun w-6"></i> Weather
-          </button>
-          <button onClick={() => setActiveView('advice')} className={`w-full flex items-center px-6 py-3 ${activeView === 'advice' ? 'bg-primary-green text-white border-r-4 border-white' : 'text-green-100 hover:bg-primary-green hover:text-white'}`}>
-            <i className="fas fa-book-open w-6"></i> Advisory Tips
-          </button>
-          <button onClick={() => setActiveView('profile')} className={`w-full flex items-center px-6 py-3 ${activeView === 'profile' ? 'bg-primary-green text-white border-r-4 border-white' : 'text-green-100 hover:bg-primary-green hover:text-white'}`}>
-            <i className="fas fa-user w-6"></i> Profile
-          </button>
-        </nav>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 p-8">
-        <header className="flex justify-between items-center mb-8">
-          <h1 className="text-2xl font-bold text-dark-green">Farmer Dashboard</h1>
           <div className="flex items-center gap-4">
-            <span className="text-dark-green font-medium">Welcome, {user?.name}</span>
-            <button onClick={logout} className="bg-white border border-red-500 text-red-500 px-4 py-2 rounded hover:bg-red-50 transition">Logout</button>
+            <div className="text-right hidden sm:block">
+              <p className="text-emerald-400 font-semibold">{user?.name}</p>
+              <p className="text-slate-400 text-sm">{t('farmer.farmerAccount')}</p>
+            </div>
+            <button
+              onClick={logout}
+              className="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-white transition-all duration-200 font-medium"
+            >
+              <i className="fas fa-sign-out-alt mr-2"></i>{t('common.logout')}
+            </button>
           </div>
-        </header>
+        </div>
+      </header>
 
-        {/* Weather Widget (Always visible on dashboard view, or maybe just part of dashboard view) */}
-        {activeView === 'dashboard' && (
-          <div className="bg-gradient-to-r from-blue-400 to-blue-600 text-white p-6 rounded-lg shadow-md mb-8 flex justify-between items-center cursor-pointer" onClick={() => setActiveView('weather')}>
-            <div>
-              <h2 className="text-xl font-bold"><i className="fas fa-map-marker-alt mr-2"></i> Northern Province</h2>
-              <p>Today, 24 Nov</p>
-            </div>
-            <div className="text-center">
-              <i className="fas fa-sun fa-3x mb-2"></i>
-              <h3 className="text-3xl font-bold">28°C</h3>
-              <p>Sunny</p>
-            </div>
-            <div className="text-right">
-              <p>Humidity: 45%</p>
-              <p>Wind: 12 km/h</p>
-              <p>Rain Chance: 10%</p>
-            </div>
+      {/* Main Layout */}
+      <div className="flex min-h-[calc(100vh-80px)]">
+        {/* Sidebar */}
+        <aside className="hidden lg:block w-64 border-r border-slate-700 bg-slate-900/50">
+          <nav className="p-6 space-y-3">
+            {sidebarItems.map(item => (
+              <button
+                key={item.id}
+                onClick={() => setActiveView(item.id)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all duration-200 ${
+                  activeView === item.id
+                    ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                }`}
+              >
+                <i className={`fas fa-${item.icon}`}></i>
+                {item.label}
+              </button>
+            ))}
+          </nav>
+        </aside>
+
+        <div className="lg:hidden border-b border-slate-700 bg-slate-900/70 px-4 py-3">
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {sidebarItems.map(item => (
+              <button
+                key={item.id}
+                onClick={() => setActiveView(item.id)}
+                className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200 ${
+                  activeView === item.id
+                    ? 'bg-emerald-500 text-white shadow-lg'
+                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
+                }`}
+              >
+                <i className={`fas fa-${item.icon} mr-2`}></i>
+                {item.label}
+              </button>
+            ))}
           </div>
-        )}
+        </div>
 
-        {renderContent()}
-      </main>
+        {/* Main Content */}
+        <main className="flex-1 overflow-auto p-6 lg:p-8">
+          {/* Welcome Banner */}
+          {activeView === 'dashboard' && (
+            <div className="mb-8 rounded-2xl bg-gradient-to-r from-emerald-500/10 to-emerald-600/10 border border-emerald-500/20 p-8">
+              <h2 className="text-3xl font-bold text-white mb-2">{t('farmer.welcomeBack', { name: user?.name })}</h2>
+              <p className="text-slate-300">{t('farmer.dashboardIntro')}</p>
+            </div>
+          )}
+
+          {/* Weather Widget (Dashboard Only) */}
+          {activeView === 'dashboard' && (
+            <div className="mb-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Quick Stats */}
+              <div className="lg:col-span-1 rounded-2xl bg-gradient-to-br from-cyan-500 to-cyan-600 p-6 text-white shadow-xl cursor-pointer hover:shadow-2xl transition-all duration-300"
+                onClick={() => setActiveView('my-products')}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-cyan-100 font-medium">{t('farmer.activeProducts')}</p>
+                    <p className="text-4xl font-bold mt-2">{products?.length || 0}</p>
+                  </div>
+                  <i className="fas fa-boxes text-5xl opacity-20"></i>
+                </div>
+              </div>
+
+              {/* Weather Card */}
+              <div className="lg:col-span-2 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6 backdrop-blur-sm">
+                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                  <i className="fas fa-cloud-sun text-yellow-400"></i> {t('farmer.currentWeather')}
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-slate-700/50 rounded-lg p-4">
+                    <p className="text-slate-400 text-sm mb-2">{t('farmer.temperature')}</p>
+                    <p className="text-2xl font-bold text-emerald-400">28°C</p>
+                  </div>
+                  <div className="bg-slate-700/50 rounded-lg p-4">
+                    <p className="text-slate-400 text-sm mb-2">{t('farmer.humidity')}</p>
+                    <p className="text-2xl font-bold text-cyan-400">45%</p>
+                  </div>
+                  <div className="bg-slate-700/50 rounded-lg p-4">
+                    <p className="text-slate-400 text-sm mb-2">{t('farmer.windSpeed')}</p>
+                    <p className="text-2xl font-bold text-amber-400">12 km/h</p>
+                  </div>
+                  <div className="bg-slate-700/50 rounded-lg p-4">
+                    <p className="text-slate-400 text-sm mb-2">{t('farmer.rainChance')}</p>
+                    <p className="text-2xl font-bold text-blue-400">10%</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {renderContent()}
+        </main>
+      </div>
     </div>
   );
 };
