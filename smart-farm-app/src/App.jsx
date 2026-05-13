@@ -1,10 +1,15 @@
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import FarmerDashboard from './pages/FarmerDashboard';
-import AdvisorDashboard from './pages/AdvisorDashboard';
+import Checkout from './pages/Checkout';
+import ProductDetail from './pages/ProductDetail';
+import ProfilePage from './pages/Profile';
+import SellerDashboard from './pages/SellerDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import BuyerDashboard from './pages/BuyerDashboard';
+import ChatPage from './pages/Chat';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -14,21 +19,24 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/product/:productId" element={<ProductDetail />} />
+        <Route path="/chat" element={<ChatPage />} />
         
         <Route 
-          path="/farmer" 
+          path="/seller" 
           element={
-            <ProtectedRoute allowedRoles={['farmer']}>
-              <FarmerDashboard />
+            <ProtectedRoute allowedRoles={['farmer', 'seller']}>
+              <SellerDashboard />
             </ProtectedRoute>
           } 
         />
-        
+
         <Route 
-          path="/advisor" 
+          path="/farmer" 
           element={
-            <ProtectedRoute allowedRoles={['advisor']}>
-              <AdvisorDashboard />
+            <ProtectedRoute allowedRoles={['farmer', 'seller']}>
+              <SellerDashboard />
             </ProtectedRoute>
           } 
         />
@@ -38,6 +46,23 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['admin']}>
               <AdminDashboard />
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/buyer" 
+          element={
+            <ProtectedRoute allowedRoles={['buyer']}>
+              <BuyerDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/profile" 
+          element={
+            <ProtectedRoute>
+              <ProfilePage />
             </ProtectedRoute>
           } 
         />
