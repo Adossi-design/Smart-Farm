@@ -16,11 +16,20 @@ const Product = sequelize.define('Product', {
     allowNull: false
   },
   price: {
-    type: DataTypes.STRING, // Keeping as string to match frontend "500 RWF" format, or could be float
+    type: DataTypes.STRING, // Keeping as string to match frontend "500 CFA" format, or could be float
     allowNull: false
   },
   quantity: {
     type: DataTypes.STRING
+  },
+  // New fields for structured quantity management
+  quantityAvailable: {
+    type: DataTypes.FLOAT,
+    defaultValue: 0
+  },
+  unit: {
+    type: DataTypes.ENUM('kg','g','ton','piece'),
+    defaultValue: 'kg'
   },
   location: {
     type: DataTypes.STRING
