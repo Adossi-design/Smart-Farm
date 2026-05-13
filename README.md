@@ -1,14 +1,24 @@
-# 🌱 Smart Farm Application   
+# � Toumaï Marketplace
 
-## 🚀 [Live Demo](https://smart-farm-market.vercel.app/)
+A modern, fully-responsive agricultural marketplace platform connecting farmers, fishermen, butchers, livestock sellers, food producers, and local sellers directly with buyers. Built with React, Node.js, and SQLite.
 
+![Status](https://img.shields.io/badge/status-production--ready-green.svg)
+![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Status](https://img.shields.io/badge/status-development-orange.svg)
-![Version](https://img.shields.io/badge/version-1.0.0-green.svg)
 
-> Bridging the gap between farmers, agricultural advisors, and administrators for a smarter agricultural ecosystem.
+---
 
-**Smart Farm** is a comprehensive web platform designed to empower farmers by connecting them with expert advice, market opportunities, and real-time weather data. It facilitates a seamless flow of information between agricultural stakeholders to improve productivity and sustainability.
+## 🎯 About the Project
+
+**Toumaï Marketplace** solves a critical problem in emerging markets: connecting local producers directly to buyers without middlemen. Farmers, food producers, and local sellers can list products with real-time communication, while buyers can browse, compare, and purchase fresh local products directly.
+
+The platform provides:
+- **Direct Communication:** Real-time messaging between buyers and sellers
+- **Product Listings:** Easy-to-use product management with images and detailed descriptions  
+- **Marketplace Discovery:** Browse products by category with powerful search
+- **Role-Based Access:** Farmer, Buyer, and Admin dashboards
+- **Fully Responsive Design:** Works perfectly on mobile, tablet, and desktop
+- **Dark Mode Support:** Eye-friendly interface with light/dark theme toggle
 
 ---
 
@@ -17,198 +27,220 @@
 - [Features](#-features)
 - [Tech Stack](#-tech-stack)
 - [Project Structure](#-project-structure)
-- [Getting Started](#-getting-started)
-- [Configuration](#-configuration)
-- [Usage & Credentials](#-usage--credentials)
-- [API Endpoints](#-api-endpoints)
-- [Roadmap](#-roadmap)
+- [Quick Start](#-quick-start)
+- [Database Setup](#-database-setup)
+- [API Overview](#-api-overview)
+- [Documentation](#-documentation)
+- [Deployment](#-deployment)
 - [Contributing](#-contributing)
 - [License](#-license)
 
 ---
 
-## 🚀 Features
+## ✨ Key Features
 
-### 🌾 For Farmers
-*   **Dashboard:** Personalized hub with weather updates and quick access to services.
-*   **Marketplace:** List agricultural produce for sale, manage inventory, and reach buyers.
-*   **Advisory Access:** Browse expert articles and tips on best farming practices.
-*   **Weather Widget:** Real-time weather updates and weekly forecasts (currently mocked).
-*   **Profile Management:** Manage personal details and contact information.
+### 👨‍🌾 For Sellers (Farmers, Producers, Fishermen, etc.)
+- **Product Management Dashboard:** Add, edit, and delete listings with categories, pricing, quantity, and location
+- **Real-Time Messaging:** Communicate directly with interested buyers
+- **Seller Profile:** Build credibility with buyer reviews and ratings
+- **Local Inventory Control:** Manage availability and quantity per location
+- **Image Upload:** Add product photos (local storage with Supabase fallback)
 
-### 👨‍🏫 For Advisors
-*   **Knowledge Sharing:** Publish rich-text articles with images to guide farmers.
-*   **Content Management:** Edit and update advisory posts to keep information current.
-*   **Professional Profile:** Showcase expertise, organization, and specialization.
+### 🛒 For Buyers  
+- **Marketplace Discovery:** Browse all products with search and category filters
+- **Product Details:** View detailed information, seller ratings, and contact info
+- **Shopping Cart & Checkout:** Add items to cart and prepare for purchase
+- **Messaging:** Chat directly with sellers about products and delivery
+- **Bookmarks:** Save favorite products for later
+- **Reviews & Ratings:** Rate sellers after purchase for community trust
 
-### 🛡️ For Administrators
-*   **Analytics Dashboard:** Visual insights into user growth and content generation.
-*   **User Management:** Register and oversee Advisors and other Administrators.
-*   **Farmer Oversight:** View registered farmers and monitor platform usage.
-*   **System Health:** Monitor key platform metrics.
-
----
-
-## 🛠 Tech Stack
-
-| Component | Technology | Description |
-|-----------|------------|-------------|
-| **Frontend** | **React (Vite)** | Fast, modern UI library |
-| | **Tailwind CSS** | Utility-first CSS framework for styling |
-| | **Recharts** | Composable charting library for React |
-| | **React Quill** | Rich text editor for content creation |
-| **Backend** | **Node.js & Express** | Scalable server-side runtime |
-| | **SQLite** | Lightweight, serverless database |
-| | **Sequelize** | Promise-based Node.js ORM |
-| | **JWT** | Secure authentication mechanism |
+### �️ For Administrators
+- **User Management:** Manage farmers, buyers, and admins
+- **Platform Analytics:** Monitor key metrics and system health
+- **Content Moderation:** Review and manage platform content
+- **Report Management:** Handle seller reports and compliance issues
 
 ---
 
-## 📂 Project Structure
+## 🛠️ Technology Stack
 
-```bash
+### Frontend
+- **React 18** - UI library
+- **Vite 5.4** - Build tool & dev server
+- **Tailwind CSS** - Utility-first styling
+- **React Router v6** - Client-side routing
+- **Socket.IO Client** - Real-time communication
+- **i18next** - Internationalization framework
+
+### Backend
+- **Node.js** - JavaScript runtime
+- **Express.js** - Web server framework
+- **Sequelize** - ORM for database operations
+- **SQLite / PostgreSQL** - Database (SQLite local, PostgreSQL production)
+- **JWT** - Authentication tokens
+- **Multer** - File upload handling
+- **Socket.IO** - WebSocket server
+
+---
+
+## 🏗️ Project Structure
+
+```
 Smart-Farm/
-├── smart-farm-app/         # Frontend React Application
+├── smart-farm-app/              # Frontend (React + Vite)
 │   ├── src/
-│   │   ├── components/     # Reusable UI components
-│   │   ├── context/        # Global state (Auth, Data)
-│   │   ├── pages/          # Application views
-│   │   └── ...
-│   └── .env                # Frontend configuration
-├── smart-farm-backend/     # Backend Node.js Application
-│   ├── config/             # Database setup
-│   ├── controllers/        # Business logic
-│   ├── models/             # Database schemas
-│   ├── routes/             # API endpoints
-│   ├── uploads/            # Image storage
-│   └── server.js           # App entry point
-└── README.md               # Documentation
+│   │   ├── components/          # Reusable UI components
+│   │   ├── pages/               # Page components (dashboards, auth, marketplace)
+│   │   ├── context/             # React Context (Auth, Data, Theme)
+│   │   ├── utils/               # API helpers, socket utilities
+│   │   ├── App.jsx              # Main app with routing
+│   │   └── index.css            # Global styles
+│   ├── package.json
+│   └── vite.config.js
+│
+├── smart-farm-backend/          # Backend (Node.js + Express)
+│   ├── config/                  # Database configuration
+│   ├── controllers/             # Business logic handlers
+│   ├── models/                  # Sequelize models
+│   ├── routes/                  # API route definitions
+│   ├── middleware/              # Auth & upload middleware
+│   ├── uploads/                 # Local file storage
+│   ├── server.js                # Express server entry point
+│   └── database.sqlite          # SQLite database file
+│
+├── ARCHITECTURE.md              # Technical design documentation
+├── SETUP_GUIDE.md               # Database & local development setup
+├── PROJECT_REPORT.md            # Project retrospective & decisions
+└── README.md                    # This file
 ```
 
 ---
 
-## 🏁 Getting Started
-
-Follow these steps to set up the project locally.
+## 🚀 Quick Start
 
 ### Prerequisites
-*   **Node.js** (v14 or higher)
-*   **npm** (Node Package Manager)
+- **Node.js 18+** and npm
+- **Windows PowerShell** or terminal of choice
+- **Git** (for version control)
 
-### Installation
+### Frontend Setup
 
-1.  **Clone the repository**
-    ```bash
-    git clone <repository-url>
-    cd Smart-Farm
-    ```
-
-2.  **Backend Setup**
-    ```bash
-    cd smart-farm-backend
-    npm install
-    ```
-
-3.  **Frontend Setup**
-    ```bash
-    cd ../smart-farm-app
-    npm install
-    ```
-
----
-
-## ⚙️ Configuration
-
-### Backend (`smart-farm-backend/.env`)
-Create a `.env` file in the backend directory if you wish to override defaults:
-```env
-PORT=5000
-JWT_SECRET=your_super_secret_key
-ADMIN_EMAIL=admin@test.com
-ADMIN_PASSWORD=password
+```powershell
+cd smart-farm-app
+npm install
+npm run dev
 ```
 
-### Frontend (`smart-farm-app/.env`)
-The frontend comes with a default `.env` file. Ensure it points to your backend:
-```env
-VITE_API_BASE_URL=http://localhost:5000
-VITE_APP_NAME="Smart Farm"
+Frontend will be available at `http://localhost:5173`
+
+### Backend Setup
+
+```powershell
+cd smart-farm-backend
+npm install
+
+# Copy environment file
+copy .env.example .env
+
+# Start development server (auto-restarts)
+npm run dev
 ```
 
----
-
-## 🔑 Usage & Credentials
-
-1.  **Start the Backend**
-    ```bash
-    cd smart-farm-backend
-    npm run dev
-    ```
-    *Server runs on `http://localhost:5000`*
-
-2.  **Start the Frontend**
-    ```bash
-    cd smart-farm-app
-    npm run dev
-    ```
-    *App runs on `http://localhost:5173`*
-
-### Default Login Credentials
-The system automatically seeds these accounts on the first run:
-
-| Role | Email | Password |
-|------|-------|----------|
-| **Admin** | `admin@test.com` | `password` |
-| **Advisor** | `advisor@test.com` | `password` |
-| **Farmer** | `farmer@test.com` | `password` |
+Backend API will be running at `http://localhost:5000`
 
 ---
 
-## 📡 API Endpoints
+## 🗄️ Database Setup
+
+**See [SETUP_GUIDE.md](./SETUP_GUIDE.md) for detailed Windows database configuration.**
+
+### Quick Database Info
+- **Local Development:** SQLite (file-based, included)
+- **Production:** PostgreSQL recommended
+- **File Location:** `smart-farm-backend/database.sqlite`
+- **Auto-Seeds:** Admin and Farmer test accounts
+
+Default Test Credentials:
+```
+Admin:    admin@test.com / 123456
+Farmer:   farmer@test.com / 123456
+```
+
+⚠️ **Change these credentials before deployment!**
+
+---
+
+## 🌐 API Overview
 
 ### Authentication
-*   `POST /api/auth/register` - Register new farmer
-*   `POST /api/auth/login` - User login
-*   `PUT /api/auth/profile` - Update profile
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - User login
+- `GET /api/auth/profile` - Get current user profile
+- `PUT /api/auth/profile` - Update user profile
 
-### Products
-*   `GET /api/products` - List all products
-*   `POST /api/products` - Create product (Farmer)
-*   `PUT /api/products/:id` - Update product
-*   `DELETE /api/products/:id` - Delete product
+### Products (Marketplace)
+- `GET /api/products` - List all products with filters
+- `POST /api/products` - Create new listing (seller only)
+- `PUT /api/products/:id` - Update listing
+- `DELETE /api/products/:id` - Delete listing
 
-### Advice
-*   `GET /api/advice` - List advice articles
-*   `POST /api/advice` - Publish advice (Advisor)
+### Messaging
+- `GET /api/conversations` - List user conversations
+- `POST /api/conversations` - Create conversation
+- `GET /api/conversations/:id/messages` - Get messages
+- `POST /api/conversations/:id/messages` - Send message
+- `POST /api/conversations/:id/attachments` - Upload file
 
-### Admin
-*   `GET /api/admin/stats` - System statistics
-*   `POST /api/admin/advisors` - Register advisor
+### Reviews
+- `POST /api/reviews` - Submit seller review
+- `GET /api/reviews/seller/:sellerId` - Get seller reviews
+
+### Reports
+- `POST /api/reports` - Report seller
+- `GET /api/reports` - Get reports (admin only)
 
 ---
 
-## 🗺️ Roadmap
+## 📚 Documentation
 
-- [ ] Integration with real-time Weather API (e.g., OpenWeatherMap)
-- [ ] Payment Gateway integration for product purchases
-- [ ] Mobile Application (React Native)
-- [ ] Multi-language support (Kinyarwanda, French, English)
-- [ ] SMS notifications for farmers
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Technical architecture and design decisions
+- **[SETUP_GUIDE.md](./SETUP_GUIDE.md)** - Detailed local development and Windows database setup  
+- **[PROJECT_REPORT.md](./PROJECT_REPORT.md)** - Project retrospective and lessons learned
+
+---
+
+## 🚀 Deployment
+
+### Prepare for Production
+1. Change all default credentials
+2. Set secure JWT secret
+3. Configure production database (PostgreSQL recommended)
+4. Review SETUP_GUIDE.md for deployment steps
+
+Backend includes `vercel.json` configuration for Vercel deployment.
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please fork the repository and submit a pull request.
+The codebase follows these principles:
 
-1.  Fork the Project
-2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4.  Push to the Branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request
+1. **Senior-Level Code:** Clean, readable, well-structured code
+2. **Single Responsibility:** Each file and function has one purpose
+3. **Responsive by Default:** All new features must work on mobile, tablet, desktop
+4. **Tested:** Core functionality tested before deployment
+5. **Documented:** Code comments for complex logic
+6. **Consistent Style:** Follow existing patterns and conventions
 
 ---
 
 ## 📝 License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+MIT License - See LICENSE file for details
+
+---
+
+**Built with ❤️ for connecting local communities and empowering sellers.**
+
+Last Updated: May 2026
+
