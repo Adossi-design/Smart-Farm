@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { buildApiUrl } from '../utils/api';
@@ -9,7 +10,10 @@ export const useData = () => useContext(DataContext);
 export const DataProvider = ({ children }) => {
   const { user } = useAuth();
   const [products, setProducts] = useState([]);
-  const [advice, setAdvice] = useState([]);
+  const [bookmarks, setBookmarks] = useState(() => {
+    const storedBookmarks = localStorage.getItem('smartFarmBookmarks');
+    return storedBookmarks ? JSON.parse(storedBookmarks) : [];
+  });
 
   const fetchProducts = async () => {
     try {
@@ -21,20 +25,28 @@ export const DataProvider = ({ children }) => {
     }
   };
 
-  const fetchAdvice = async () => {
-    try {
-      const response = await fetch(buildApiUrl('/api/advice'));
-      const data = await response.json();
-      setAdvice(data);
-    } catch (error) {
-      console.error("Error fetching advice:", error);
-    }
-  };
-
   useEffect(() => {
     fetchProducts();
-    fetchAdvice();
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('smartFarmBookmarks', JSON.stringify(bookmarks));
+  }, [bookmarks]);
+
+  const readErrorMessage = async (response, fallbackMessage) => {
+    const contentType = response.headers.get('content-type') || '';
+
+    if (contentType.includes('application/json')) {
+      const errorData = await response.json().catch(() => ({}));
+      if (errorData.message) return errorData.message;
+      if (Array.isArray(errorData.errors) && errorData.errors.length > 0) {
+        return errorData.errors.join(', ');
+      }
+    }
+
+    const rawText = await response.text().catch(() => '');
+    return rawText || fallbackMessage;
+  };
 
   const addProduct = async (productData) => {
     try {
@@ -61,45 +73,11 @@ export const DataProvider = ({ children }) => {
         fetchProducts(); // Refresh list
         return { success: true };
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        return { success: false, message: errorData.message || "Failed to add product" };
+        const message = await readErrorMessage(response, 'Failed to add product');
+        return { success: false, message, status: response.status };
       }
     } catch (error) {
       console.error("Error adding product:", error);
-      return { success: false, message: error.message };
-    }
-  };
-
-  const addAdvice = async (newAdvice) => {
-    try {
-      const token = user?.token;
-      if (!token) return { success: false, message: "Not authenticated" };
-
-      const isFormData = newAdvice instanceof FormData;
-
-      const headers = {
-        'Authorization': `Bearer ${token}`
-      };
-
-      if (!isFormData) {
-        headers['Content-Type'] = 'application/json';
-      }
-
-      const response = await fetch(buildApiUrl('/api/advice'), {
-        method: 'POST',
-        headers: headers,
-        body: isFormData ? newAdvice : JSON.stringify(newAdvice),
-      });
-
-      if (response.ok) {
-        fetchAdvice(); // Refresh list
-        return { success: true };
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        return { success: false, message: errorData.message || "Failed to add advice" };
-      }
-    } catch (error) {
-      console.error("Error adding advice:", error);
       return { success: false, message: error.message };
     }
   };
@@ -129,8 +107,8 @@ export const DataProvider = ({ children }) => {
         fetchProducts(); // Refresh list
         return { success: true };
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        return { success: false, message: errorData.message || "Failed to update product" };
+        const message = await readErrorMessage(response, 'Failed to update product');
+        return { success: false, message, status: response.status };
       }
     } catch (error) {
       console.error("Error updating product:", error);
@@ -154,8 +132,8 @@ export const DataProvider = ({ children }) => {
         fetchProducts(); // Refresh list
         return { success: true };
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        return { success: false, message: errorData.message || "Failed to delete product" };
+        const message = await readErrorMessage(response, 'Failed to delete product');
+        return { success: false, message, status: response.status };
       }
     } catch (error) {
       console.error("Error deleting product:", error);
@@ -163,8 +141,38 @@ export const DataProvider = ({ children }) => {
     }
   };
 
+  const toggleBookmark = (product) => {
+    setBookmarks((currentBookmarks) => {
+      const exists = currentBookmarks.some((item) => item.id === product.id);
+      if (exists) {
+        return currentBookmarks.filter((item) => item.id !== product.id);
+      }
+
+      return [
+        {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          quantity: product.quantity,
+          quantityAvailable: product.quantityAvailable,
+          unit: product.unit,
+          location: product.location,
+          description: product.description,
+          image: product.image,
+          sellerId: product.sellerId,
+          profession: product.profession,
+          averageRating: product.averageRating,
+          totalReviews: product.totalReviews
+        },
+        ...currentBookmarks.filter((item) => item.id !== product.id)
+      ];
+    });
+  };
+
+  const isBookmarked = (productId) => bookmarks.some((item) => item.id === productId);
+
   return (
-    <DataContext.Provider value={{ products, advice, addProduct, addAdvice, updateProduct, deleteProduct }}>
+    <DataContext.Provider value={{ products, bookmarks, addProduct, updateProduct, deleteProduct, toggleBookmark, isBookmarked }}>
       {children}
     </DataContext.Provider>
   );
