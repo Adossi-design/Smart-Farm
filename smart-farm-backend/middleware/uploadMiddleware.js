@@ -4,14 +4,14 @@ const path = require('path');
 const storage = multer.memoryStorage();
 
 function checkFileType(file, cb) {
-  const filetypes = /jpg|jpeg|png/;
+  const filetypes = /jpg|jpeg|png|jfif|webp/;
   const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
   const mimetype = filetypes.test(file.mimetype);
 
   if (extname && mimetype) {
     return cb(null, true);
   } else {
-    cb('Images only!');
+    cb(new Error('Only image files are allowed. Supported formats: JPG, JPEG, PNG, JFIF, and WEBP.'));
   }
 }
 
