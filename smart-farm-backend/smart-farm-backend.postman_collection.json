@@ -441,7 +441,7 @@
 					"response": []
 				},
 				{
-					"name": "Get Advisors",
+					"name": "Get Users",
 					"request": {
 						"auth": {
 							"type": "bearer",
@@ -456,7 +456,7 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{base_url}}/api/admin/advisors",
+							"raw": "{{base_url}}/api/admin/users",
 							"host": [
 								"{{base_url}}"
 							],
@@ -470,7 +470,7 @@
 					"response": []
 				},
 				{
-					"name": "Register Advisor",
+					"name": "Advisor Role Removed",
 					"request": {
 						"auth": {
 							"type": "bearer",
@@ -494,7 +494,7 @@
 							}
 						},
 						"url": {
-							"raw": "{{base_url}}/api/admin/advisors",
+							"raw": "{{base_url}}/api/admin/users",
 							"host": [
 								"{{base_url}}"
 							],
