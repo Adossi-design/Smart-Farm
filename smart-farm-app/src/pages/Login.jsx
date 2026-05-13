@@ -2,27 +2,31 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 
 const Login = () => {
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const { success, error } = useToast();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-
-    const user = await login(email, password);
-    if (user) {
-      if (user.role === 'farmer') navigate('/farmer');
-      else if (user.role === 'advisor') navigate('/advisor');
+    setLoading(true);
+    const result = await login(email, password);
+    setLoading(false);
+    if (result?.success) {
+      success(t('auth.loginSuccess') || 'Login successful');
+      const user = result.user;
+      if (user.role === 'farmer') navigate('/seller');
       else if (user.role === 'admin') navigate('/admin');
+      else if (user.role === 'buyer') navigate('/buyer');
       else navigate('/');
     } else {
-      setError(t('auth.invalidCredentials'));
+      error(result?.message || t('auth.invalidCredentials'));
     }
   };
 
@@ -34,8 +38,6 @@ const Login = () => {
           <h2 className="text-2xl font-bold text-gray-800">{t('auth.loginTitle')}</h2>
           <p className="text-gray-600">{t('auth.accessDashboard')}</p>
         </div>
-
-        {error && <div className="bg-red-100 text-red-700 p-2 rounded mb-4">{error}</div>}
 
         <form className="space-y-4 text-left" onSubmit={handleSubmit}>
           <div>
@@ -58,12 +60,14 @@ const Login = () => {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-          <button type="submit" className="w-full bg-primary-green text-white py-2 rounded font-bold hover:bg-dark-green transition">{t('auth.loginBtn')}</button>
+          <button type="submit" disabled={loading} className="w-full bg-primary-green text-white py-2 rounded font-bold hover:bg-dark-green transition disabled:opacity-60">
+            {loading ? <><i className="fas fa-spinner fa-spin mr-2"></i>{t('common.loading')}</> : t('auth.loginBtn')}
+          </button>
         </form>
 
         <div className="mt-6 text-sm">
           <p>{t('auth.noAccount')}</p>
-          <Link to="/register" className="text-primary-green font-bold hover:underline">{t('auth.registerFarmer')}</Link>
+          <Link to="/register" className="text-primary-green font-bold hover:underline">{t('auth.registerSeller')}</Link>
         </div>
         <div className="mt-4">
           <Link to="/" className="text-gray-500 hover:text-gray-700 text-sm">&larr; {t('auth.backToMarket')}</Link>
