@@ -1,0 +1,45 @@
+module.exports = {
+  root: true,
+  ignorePatterns: ['dist/'],
+  env: {
+    browser: true,
+    es2021: true,
+    node: true,
+  },
+  extends: [
+    'eslint:recommended',
+    'plugin:react/recommended',
+    'plugin:react-hooks/recommended',
+  ],
+  parserOptions: {
+    ecmaVersion: 'latest',
+    sourceType: 'module',
+  },
+  settings: {
+    react: {
+      version: 'detect',
+    },
+  },
+  plugins: ['react', 'react-hooks', 'react-refresh'],
+  rules: {
+    'react/react-in-jsx-scope': 'error',
+    'react/prop-types': 'off',
+    'react-refresh/only-export-components': 'error',
+    'react-hooks/exhaustive-deps': 'error',
+    'no-unused-vars': 'error',
+    'no-empty': 'error',
+    'no-cond-assign': 'error',
+    'no-fallthrough': 'error',
+    'no-constant-condition': 'error',
+    'no-prototype-builtins': 'error',
+    'no-case-declarations': 'error',
+    'valid-typeof': 'error',
+    'eqeqeq': 'error',
+    'no-var': 'error',
+    'no-debugger': 'error',
+    'no-constant-binary-expression': 'error',
+    'no-unreachable': 'error',
+    'no-func-assign': 'off',
+    'no-undef': 'error',
+  },
+};
