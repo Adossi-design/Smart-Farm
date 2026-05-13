@@ -1,4 +1,6 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { buildApiUrl } from '../utils/api';
 
 const AuthContext = createContext();
@@ -8,6 +10,7 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
 
   useEffect(() => {
     // Check local storage for persisted user
@@ -25,19 +28,20 @@ export const AuthProvider = ({ children }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-      const data = await response.json();
-      
+      const raw = await response.text();
+      const data = raw ? JSON.parse(raw) : {};
+
       if (response.ok) {
         setUser(data);
         localStorage.setItem('smartFarmUser', JSON.stringify(data));
-        return data;
+        return { success: true, user: data };
       } else {
-        console.error(data.message);
-        return null;
+        // return structured error so callers can display specific messages
+        return { success: false, status: response.status, message: data?.message || t('auth.invalidCredentials') };
       }
     } catch (error) {
       console.error("Login error:", error);
-      return null;
+      return { success: false, message: error.message };
     }
   };
 
@@ -47,30 +51,36 @@ export const AuthProvider = ({ children }) => {
         name: formData.fullName,
         email: formData.email, 
         password: formData.password,
-        role: 'farmer',
+        role: formData.role,
         phone: formData.phone,
         location: formData.location
       };
+
+      // Include profession if role is farmer
+      if (formData.role === 'farmer' && formData.profession) {
+        payload.profession = formData.profession;
+      }
 
       const response = await fetch(buildApiUrl('/api/auth/register'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      
-      const data = await response.json();
+
+      const raw = await response.text();
+      const data = raw ? JSON.parse(raw) : {};
 
       if (response.ok) {
         setUser(data);
         localStorage.setItem('smartFarmUser', JSON.stringify(data));
         return data;
       } else {
-        alert(data.message);
+        alert(data.message || t('validation.registrationFailed'));
         return null;
       }
     } catch (error) {
       console.error("Register error:", error);
-      alert("Registration failed: " + error.message);
+      alert(`${t('validation.registrationFailed')}: ${error.message}`);
       return null;
     }
   };
@@ -80,8 +90,13 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('smartFarmUser');
   };
 
+  const updateUser = (updatedUser) => {
+    setUser(updatedUser);
+    localStorage.setItem('smartFarmUser', JSON.stringify(updatedUser));
+  };
+
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, loading, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
