@@ -1,6 +1,8 @@
 const { Product, User } = require('../models');
 const { Op } = require('sequelize');
 const { createClient } = require('@supabase/supabase-js');
+const fs = require('fs');
+const path = require('path');
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -9,10 +11,30 @@ const supabase = supabaseUrl && supabaseServiceRoleKey
   ? createClient(supabaseUrl, supabaseServiceRoleKey)
   : null;
 
+const ensureUploadsDir = () => {
+  const uploadsPath = path.join(__dirname, '..', 'uploads');
+  if (!fs.existsSync(uploadsPath)) {
+    fs.mkdirSync(uploadsPath, { recursive: true });
+  }
+  return uploadsPath;
+};
+
+const uploadToLocalStorage = async (file) => {
+  if (!file) return null;
+
+  const uploadsPath = ensureUploadsDir();
+  const safeName = file.originalname.replace(/[^a-zA-Z0-9.]/g, '_');
+  const objectKey = `${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeName}`;
+  const destination = path.join(uploadsPath, objectKey);
+
+  await fs.promises.writeFile(destination, file.buffer);
+  return `/uploads/${objectKey}`;
+};
+
 const uploadToSupabase = async (file) => {
   if (!file) return null;
   if (!supabase) {
-    throw new Error('Supabase storage is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
+    return uploadToLocalStorage(file);
   }
 
   const safeName = file.originalname.replace(/[^a-zA-Z0-9.]/g, '_');
@@ -72,18 +94,21 @@ exports.getProductById = async (req, res) => {
 
 exports.createProduct = async (req, res) => {
   try {
-    const { name, category, price, quantity, location, description, whatsapp, imageUrl } = req.body;
+    const { name, category, price, quantity, quantityAvailable, unit, location, description, whatsapp, imageUrl } = req.body;
     
     let imagePath = imageUrl || req.body.image || '';
     if (req.file) {
       imagePath = await uploadToSupabase(req.file);
     }
 
+    // Keep legacy `quantity` string for backward compatibility, but store structured fields too
     const product = await Product.create({
       name,
       category,
       price,
-      quantity,
+      quantity: quantity || (quantityAvailable ? `${quantityAvailable} ${unit || 'kg'}` : ''),
+      quantityAvailable: quantityAvailable ? parseFloat(quantityAvailable) : (quantity ? parseFloat(quantity) || 0 : 0),
+      unit: unit || 'kg',
       location,
       description,
       image: imagePath,
@@ -108,7 +133,7 @@ exports.getMyProducts = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
   try {
-    const { name, category, price, quantity, location, description, whatsapp, imageUrl } = req.body;
+    const { name, category, price, quantity, quantityAvailable, unit, location, description, whatsapp, imageUrl } = req.body;
     const product = await Product.findByPk(req.params.id);
 
     if (!product) {
@@ -132,6 +157,8 @@ exports.updateProduct = async (req, res) => {
     product.category = category || product.category;
     product.price = price || product.price;
     product.quantity = quantity || product.quantity;
+    if (quantityAvailable !== undefined) product.quantityAvailable = parseFloat(quantityAvailable) || product.quantityAvailable;
+    if (unit) product.unit = unit;
     product.location = location || product.location;
     product.description = description || product.description;
     product.whatsapp = whatsapp || product.whatsapp;
