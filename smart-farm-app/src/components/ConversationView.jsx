@@ -136,6 +136,7 @@ const ConversationView = ({ conversationId, currentUser, onBack }) => {
       {/* Messages */}
       <div
         ref={listRef}
+        dir="ltr"
         className="flex-1 min-h-0 overflow-y-auto px-4 py-4 flex flex-col gap-1 bg-slate-50 dark:bg-slate-950"
       >
         {loading && (
@@ -195,7 +196,7 @@ const ConversationView = ({ conversationId, currentUser, onBack }) => {
                       ? 'bg-emerald-500 text-white rounded-br-sm'
                       : 'bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-bl-sm border border-slate-100 dark:border-slate-700'
                   }`}>
-                    <p className="text-sm break-words leading-relaxed">{m.body}</p>
+                    <p dir="auto" className="text-sm break-words leading-relaxed">{m.body}</p>
                     <div className={`flex items-center justify-end gap-1 mt-1 ${isOwn ? 'text-emerald-100/80' : 'text-slate-400 dark:text-slate-500'}`}>
                       <span className="text-xs">{formatTime(m.createdAt)}</span>
                       {isOwn && (
