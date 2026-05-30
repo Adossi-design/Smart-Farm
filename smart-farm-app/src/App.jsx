@@ -1,21 +1,32 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Checkout from './pages/Checkout';
-import ProductDetail from './pages/ProductDetail';
-import ProfilePage from './pages/Profile';
-import SellerDashboard from './pages/SellerDashboard';
-import AdminDashboard from './pages/AdminDashboard';
-import BuyerDashboard from './pages/BuyerDashboard';
-import ChatPage from './pages/Chat';
 import ProtectedRoute from './components/ProtectedRoute';
+import Chatbot from './components/Chatbot';
+
+// Route-level code splitting keeps the initial bundle small; heavy
+// dependencies (recharts, react-quill) load only when their page is visited.
+const Home = lazy(() => import('./pages/Home'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const Checkout = lazy(() => import('./pages/Checkout'));
+const ProductDetail = lazy(() => import('./pages/ProductDetail'));
+const ProfilePage = lazy(() => import('./pages/Profile'));
+const SellerDashboard = lazy(() => import('./pages/SellerDashboard'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const BuyerDashboard = lazy(() => import('./pages/BuyerDashboard'));
+const ChatPage = lazy(() => import('./pages/Chat'));
+
+const PageFallback = () => (
+  <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-950">
+    <i className="fas fa-spinner fa-spin text-2xl text-emerald-500"></i>
+  </div>
+);
 
 function App() {
   return (
     <Router>
-      <Routes>
+      <Suspense fallback={<PageFallback />}>
+        <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -66,7 +77,9 @@ function App() {
             </ProtectedRoute>
           } 
         />
-      </Routes>
+        </Routes>
+      </Suspense>
+      <Chatbot />
     </Router>
   );
 }

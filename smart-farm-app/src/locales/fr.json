@@ -408,6 +408,18 @@
     "noConversations": "Pas encore de conversations",
     "searchByName": "Rechercher par nom ou produit"
   },
+  "chatbot": {
+    "title": "Assistant Toumaï",
+    "subtitle": "Assistant IA • en ligne",
+    "greeting": "Bonjour ! Je suis l'assistant Toumaï. Posez-moi des questions sur les produits, les prix ou comment acheter sur la marketplace.",
+    "placeholder": "Posez une question sur les produits, les prix…",
+    "send": "Envoyer",
+    "thinking": "Réflexion…",
+    "searching": "Recherche dans le catalogue…",
+    "empty": "Je n'ai pas trouvé de réponse à cela.",
+    "error": "Une erreur s'est produite. Veuillez réessayer.",
+    "disclaimer": "L'IA peut faire des erreurs. Vérifiez les informations importantes."
+  },
   "register": {
     "title": "Créez votre compte",
     "selectRole": "Sélectionnez votre rôle",

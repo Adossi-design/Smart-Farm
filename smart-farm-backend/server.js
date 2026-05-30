@@ -13,6 +13,7 @@ const orderRoutes = require('./routes/orderRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const translateRoutes = require('./routes/translateRoutes');
+const assistantRoutes = require('./routes/assistantRoutes');
 const messageRoutesFactory = require('./routes/messageRoutes');
 
 dotenv.config();
@@ -60,6 +61,7 @@ app.use('/api', orderRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/translate', translateRoutes);
+app.use('/api/assistant', assistantRoutes);
 
 // Dev-only: reset all conversations and messages
 if (process.env.NODE_ENV !== 'production') {

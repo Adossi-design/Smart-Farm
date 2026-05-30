@@ -404,6 +404,18 @@ const enTranslation = {
     noConversations: "No conversations yet",
     searchByName: "Search by name or product"
   },
+  chatbot: {
+    title: "Toumaï Assistant",
+    subtitle: "AI helper • online",
+    greeting: "Hi! I'm the Toumaï Assistant. Ask me about products, prices, or how to buy on the marketplace.",
+    placeholder: "Ask about products, prices…",
+    send: "Send",
+    thinking: "Thinking…",
+    searching: "Searching the catalog…",
+    empty: "I could not find an answer for that.",
+    error: "Something went wrong. Please try again.",
+    disclaimer: "AI can make mistakes. Verify important details."
+  },
   register: {
     title: "Create Your Account",
     selectRole: "Select your role",
