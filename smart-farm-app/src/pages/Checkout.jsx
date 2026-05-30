@@ -23,12 +23,12 @@ const Checkout = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
         <Navbar />
         <div className="container mx-auto px-4 py-12 text-center">
-          <i className="fas fa-lock text-6xl text-slate-300 mb-4"></i>
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('checkout.loginRequired')}</h2>
-          <p className="text-gray-600 mb-6">{t('checkout.loginPrompt')}</p>
+          <i className="fas fa-lock text-6xl text-slate-300 dark:text-slate-600 mb-4"></i>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">{t('checkout.loginRequired')}</h2>
+          <p className="text-gray-600 dark:text-slate-400 mb-6">{t('checkout.loginPrompt')}</p>
           <button 
             onClick={() => navigate('/login')}
             className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-8 py-3 rounded-lg font-bold hover:from-emerald-600 hover:to-emerald-700 transition"
@@ -42,12 +42,12 @@ const Checkout = () => {
 
   if (cart.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
         <Navbar />
         <div className="container mx-auto px-4 py-12 text-center">
-          <i className="fas fa-shopping-cart text-6xl text-slate-300 mb-4"></i>
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">{t('checkout.cartEmpty')}</h2>
-          <p className="text-gray-600 mb-6">{t('checkout.cartEmptyPrompt')}</p>
+          <i className="fas fa-shopping-cart text-6xl text-slate-300 dark:text-slate-600 mb-4"></i>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">{t('checkout.cartEmpty')}</h2>
+          <p className="text-gray-600 dark:text-slate-400 mb-6">{t('checkout.cartEmptyPrompt')}</p>
           <button 
             onClick={() => navigate('/')}
             className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-8 py-3 rounded-lg font-bold hover:from-emerald-600 hover:to-emerald-700 transition"
@@ -104,65 +104,65 @@ const Checkout = () => {
 
   if (orderPlaced) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900 flex items-center justify-center">
         <Navbar />
-        <div className="text-center">
+        <div className="text-center px-4">
           <div className="mb-6 animate-bounce">
             <i className="fas fa-check-circle text-6xl text-emerald-500"></i>
           </div>
-          <h2 className="text-3xl font-bold text-dark-green mb-2">{t('checkout.orderPlacedSuccess')}</h2>
-          <p className="text-gray-600 text-lg mb-6">{t('checkout.thankYouRedirecting')}</p>
-          <p className="text-emerald-600 font-bold">{t('checkout.orderTotal')}: CFA {totalAmount?.toLocaleString() || '0'}</p>
+          <h2 className="text-3xl font-bold text-dark-green dark:text-emerald-400 mb-2">{t('checkout.orderPlacedSuccess')}</h2>
+          <p className="text-gray-600 dark:text-slate-400 text-lg mb-6">{t('checkout.thankYouRedirecting')}</p>
+          <p className="text-emerald-600 dark:text-emerald-400 font-bold">{t('checkout.orderTotal')}: CFA {totalAmount?.toLocaleString() || '0'}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white dark:from-slate-950 dark:to-slate-900">
       <Navbar />
       
       <div className="container mx-auto px-4 py-12">
-        <h1 className="text-3xl font-bold text-dark-green mb-8">{t('checkout.checkout')}</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-dark-green dark:text-emerald-400 mb-8">{t('checkout.checkout')}</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Order Summary */}
           <div className="lg:col-span-2 space-y-6">
             {/* Delivery Address */}
-            <div className="bg-white rounded-2xl p-6 border-2 border-slate-200">
-              <h2 className="text-xl font-bold text-dark-green mb-4 flex items-center gap-2">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border-2 border-slate-200 dark:border-slate-700">
+              <h2 className="text-xl font-bold text-dark-green dark:text-emerald-400 mb-4 flex items-center gap-2">
                 <i className="fas fa-map-marker-alt text-emerald-500"></i>
                 {t('checkout.deliveryAddress')}
               </h2>
               <div className="space-y-3">
                 <div className="grid grid-cols-1 gap-3">
-                  <input 
-                    type="text" 
-                    placeholder={t('checkout.city')} 
+                  <input
+                    type="text"
+                    placeholder={t('checkout.city')}
                     defaultValue={user?.location || user?.city || ''}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-emerald-500"
+                    className="w-full px-4 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg focus:outline-none focus:border-emerald-500"
                   />
                 </div>
-                <p className="text-sm text-gray-500">{t('checkout.deliveryNote')}</p>
+                <p className="text-sm text-gray-500 dark:text-slate-400">{t('checkout.deliveryNote')}</p>
               </div>
             </div>
 
             {/* Order Items */}
-            <div className="bg-white rounded-2xl p-6 border-2 border-slate-200">
-              <h2 className="text-xl font-bold text-dark-green mb-4 flex items-center gap-2">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border-2 border-slate-200 dark:border-slate-700">
+              <h2 className="text-xl font-bold text-dark-green dark:text-emerald-400 mb-4 flex items-center gap-2">
                 <i className="fas fa-box text-emerald-500"></i>
                 {t('checkout.orderItems')} ({cart.length})
               </h2>
               <div className="space-y-4">
                 {cart.map(item => (
-                  <div key={item.id} className="flex justify-between items-center pb-4 border-b last:border-0">
+                  <div key={item.id} className="flex justify-between items-center pb-4 border-b border-slate-100 dark:border-slate-700 last:border-0">
                     <div>
-                      <h3 className="font-bold text-gray-800">{item.name}</h3>
-                      <p className="text-sm text-gray-600">{t('checkout.qty')}: {item.quantity}</p>
+                      <h3 className="font-bold text-gray-800 dark:text-white">{item.name}</h3>
+                      <p className="text-sm text-gray-600 dark:text-slate-400">{t('checkout.qty')}: {item.quantity}</p>
                     </div>
                     <div className="text-right">
-                      <p className="font-bold text-emerald-600">CFA {(item.price * item.quantity)?.toLocaleString() || '0'}</p>
-                        <p className="text-sm text-gray-600">CFA {item.price?.toLocaleString() || '0'}</p>
+                      <p className="font-bold text-emerald-600 dark:text-emerald-400">CFA {(item.price * item.quantity)?.toLocaleString() || '0'}</p>
+                        <p className="text-sm text-gray-600 dark:text-slate-400">CFA {item.price?.toLocaleString() || '0'}</p>
                     </div>
                   </div>
                 ))}
@@ -170,24 +170,24 @@ const Checkout = () => {
             </div>
 
             {/* Payment Method */}
-            <div className="bg-white rounded-2xl p-6 border-2 border-slate-200">
-              <h2 className="text-xl font-bold text-dark-green mb-4 flex items-center gap-2">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border-2 border-slate-200 dark:border-slate-700">
+              <h2 className="text-xl font-bold text-dark-green dark:text-emerald-400 mb-4 flex items-center gap-2">
                 <i className="fas fa-credit-card text-emerald-500"></i>
                 {t('checkout.paymentMethod')}
               </h2>
               <div className="space-y-3">
-                <label className="flex items-center p-4 border-2 border-emerald-500 rounded-lg cursor-pointer bg-emerald-50">
-                  <input 
-                    type="radio" 
-                    name="payment" 
-                    value="card" 
+                <label className="flex items-center p-4 border-2 border-emerald-500 rounded-lg cursor-pointer bg-emerald-50 dark:bg-emerald-900/20">
+                  <input
+                    type="radio"
+                    name="payment"
+                    value="card"
                     checked={paymentMethod === 'card'}
                     onChange={(e) => setPaymentMethod(e.target.value)}
                     className="w-4 h-4 accent-emerald-600"
                   />
                   <div className="ml-3">
-                    <p className="font-bold text-dark-green">{t('checkout.debitCreditCard')}</p>
-                    <p className="text-sm text-gray-600">{t('checkout.secureOnlinePayment')}</p>
+                    <p className="font-bold text-dark-green dark:text-emerald-400">{t('checkout.debitCreditCard')}</p>
+                    <p className="text-sm text-gray-600 dark:text-slate-400">{t('checkout.secureOnlinePayment')}</p>
                   </div>
                 </label>
               </div>
@@ -195,19 +195,19 @@ const Checkout = () => {
           </div>
 
           {/* Order Total Summary */}
-          <div className="bg-white rounded-2xl p-6 border-2 border-slate-200 h-fit sticky top-24">
-            <h2 className="text-xl font-bold text-dark-green mb-6">{t('checkout.orderSummary')}</h2>
-            
-            <div className="space-y-3 pb-6 border-b-2 border-slate-200">
-              <div className="flex justify-between text-gray-600">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-6 border-2 border-slate-200 dark:border-slate-700 h-fit sticky top-24">
+            <h2 className="text-xl font-bold text-dark-green dark:text-emerald-400 mb-6">{t('checkout.orderSummary')}</h2>
+
+            <div className="space-y-3 pb-6 border-b-2 border-slate-200 dark:border-slate-700">
+              <div className="flex justify-between text-gray-600 dark:text-slate-400">
                 <span>{t('checkout.subtotal')}</span>
                 <span>CFA {cartTotal?.toLocaleString() || '0'}</span>
               </div>
-              <div className="flex justify-between text-gray-600">
+              <div className="flex justify-between text-gray-600 dark:text-slate-400">
                 <span>{t('checkout.platformFee')}</span>
                 <span>CFA {platformFee?.toLocaleString() || '0'}</span>
               </div>
-              <div className="flex justify-between text-gray-600">
+              <div className="flex justify-between text-gray-600 dark:text-slate-400">
                 <span>{t('checkout.sellerPayout')}</span>
                 <span>CFA {sellerShare?.toLocaleString() || '0'}</span>
               </div>
@@ -215,8 +215,8 @@ const Checkout = () => {
 
             <div className="py-6 mb-6">
               <div className="flex justify-between items-center">
-                <span className="text-lg font-bold text-dark-green">{t('checkout.total')}</span>
-                <span className="text-2xl font-bold text-emerald-600">
+                <span className="text-lg font-bold text-dark-green dark:text-emerald-400">{t('checkout.total')}</span>
+                <span className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                   CFA {totalAmount?.toLocaleString() || '0'}
                 </span>
               </div>
@@ -240,15 +240,15 @@ const Checkout = () => {
               )}
             </button>
 
-            <button 
+            <button
               onClick={() => navigate('/')}
-              className="w-full mt-3 bg-slate-200 text-gray-800 py-3 rounded-lg font-bold hover:bg-slate-300 transition"
+              className="w-full mt-3 bg-slate-200 dark:bg-slate-700 text-gray-800 dark:text-white py-3 rounded-lg font-bold hover:bg-slate-300 dark:hover:bg-slate-600 transition"
             >
               {t('checkout.continueShopping')}
             </button>
 
-            <div className="mt-6 p-4 bg-emerald-50 rounded-lg border border-emerald-200">
-              <p className="text-sm text-emerald-800">
+            <div className="mt-6 p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
+              <p className="text-sm text-emerald-800 dark:text-emerald-300">
                 <i className="fas fa-shield-alt mr-2"></i>
                 <strong>{t('checkout.secureCheckout')}:</strong> {t('checkout.secureCheckoutDesc')}
               </p>

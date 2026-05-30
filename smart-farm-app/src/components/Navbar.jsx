@@ -49,7 +49,7 @@ const Navbar = () => {
             <Link to="/" className="text-gray-700 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition">{t('nav.marketplace')}</Link>
             {user ? (
               <>
-                <Link to="/buyer" className="text-gray-700 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition">{t('common.messages')}</Link>
+                <Link to="/chat" className="text-gray-700 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition">{t('common.messages')}</Link>
                 <Link to="/buyer" className="text-gray-700 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition">{t('buyer.bookmarks')}</Link>
                 <Link to="/profile" className="text-gray-700 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 font-medium transition">{t('common.profile')}</Link>
               </>

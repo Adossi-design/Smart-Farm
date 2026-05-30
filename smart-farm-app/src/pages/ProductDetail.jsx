@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
+import { useToast } from '../context/ToastContext';
 import { buildApiUrl } from '../utils/api';
 import { useTranslatedFields } from '../hooks/useTranslatedText';
 import RatingModal from '../components/RatingModal';
@@ -14,6 +15,7 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { addToCart } = useData();
+  const { success, error: toastError } = useToast();
 
   const [product, setProduct] = useState(null);
   const [seller, setSeller] = useState(null);
@@ -48,7 +50,7 @@ const ProductDetail = () => {
       setLoading(true);
       const response = await fetch(buildApiUrl(`/api/products/${productId}`));
       if (!response.ok) {
-        alert(t('errors.notFound'));
+        toastError(t('errors.notFound'));
         navigate('/');
         return;
       }
@@ -61,12 +63,12 @@ const ProductDetail = () => {
       }
     } catch (error) {
       console.error('Error fetching product:', error);
-      alert(t('errors.loadingFailed'));
+      toastError(t('errors.loadingFailed'));
       navigate('/');
     } finally {
       setLoading(false);
     }
-  }, [fetchSellerReviews, navigate, productId, t]);
+  }, [fetchSellerReviews, navigate, productId, t, toastError]);
 
   useEffect(() => {
     fetchProductDetails();
@@ -74,13 +76,13 @@ const ProductDetail = () => {
 
   const handleAddToCart = () => {
     if (!user) {
-      alert(t('errors.unauthorized'));
+      toastError(t('errors.unauthorized'));
       navigate('/login');
       return;
     }
 
     if (quantity > (product.quantityAvailable || product.quantity)) {
-      alert(t('product.notEnoughQuantity') || 'Not enough quantity available');
+      toastError(t('product.notEnoughQuantity') || 'Not enough quantity available');
       return;
     }
 
@@ -93,7 +95,7 @@ const ProductDetail = () => {
       sellerId: product.sellerId
     });
 
-    alert(`${quantity} ${product.unit || 'item'}(s) ${t('common.add')}`);
+    success(`${quantity} ${product.unit || 'item'}(s) ${t('common.add')}`);
     setQuantity(1);
   };
 
@@ -128,8 +130,8 @@ const ProductDetail = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <i className="fas fa-spinner fa-spin text-4xl text-primary-green"></i>
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-slate-950">
+        <i className="fas fa-spinner fa-spin text-4xl text-primary-green dark:text-emerald-400"></i>
       </div>
     );
   }
@@ -146,21 +148,21 @@ const ProductDetail = () => {
     : null;
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8">
+    <div className="min-h-screen bg-gray-100 dark:bg-slate-950 py-6 sm:py-8">
       <div className="max-w-6xl mx-auto px-4">
         {/* Product Details Section */}
-        <div className="bg-white rounded-2xl overflow-hidden shadow-lg mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 p-8">
+        <div className="bg-white dark:bg-slate-900 dark:border dark:border-slate-700 rounded-2xl overflow-hidden shadow-lg mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 p-5 sm:p-8">
             {/* Product Image */}
-            <div className="flex items-center justify-center bg-gray-100 rounded-lg">
+            <div className="flex items-center justify-center bg-gray-100 dark:bg-slate-800 rounded-xl min-h-[16rem]">
               {productImage ? (
-                <img 
-                  src={productImage} 
+                <img
+                  src={productImage}
                   alt={translatedFields.name || product.name}
-                  className="max-h-96 object-cover rounded"
+                  className="max-h-96 w-full object-cover rounded-xl"
                 />
               ) : (
-                <div className="text-center text-gray-400">
+                <div className="text-center text-gray-400 dark:text-slate-500">
                   <i className="fas fa-image text-6xl mb-4"></i>
                   <p>{t('product.noImage') || 'No image available'}</p>
                 </div>
@@ -169,15 +171,15 @@ const ProductDetail = () => {
 
             {/* Product Info */}
             <div>
-              <h1 className="text-3xl font-bold text-dark-green mb-2">{translatedFields.name || product.name}</h1>
-              <p className="text-gray-600 text-sm mb-6">{translatedFields.category || product.category}</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-dark-green dark:text-emerald-400 mb-2">{translatedFields.name || product.name}</h1>
+              <p className="text-gray-600 dark:text-slate-400 text-sm mb-6">{translatedFields.category || product.category}</p>
 
               {/* Seller Info */}
-              <div className="bg-emerald-50 rounded-lg p-4 mb-6 border-2 border-emerald-200">
-                <h3 className="font-bold text-dark-green mb-2">{t('product.sellerInfo') || 'Seller Information'}</h3>
-                <p className="text-gray-700 font-medium">{seller?.name}</p>
+              <div className="bg-emerald-50 dark:bg-slate-800 rounded-xl p-4 mb-6 border-2 border-emerald-200 dark:border-slate-700">
+                <h3 className="font-bold text-dark-green dark:text-emerald-400 mb-2">{t('product.sellerInfo') || 'Seller Information'}</h3>
+                <p className="text-gray-700 dark:text-slate-200 font-medium">{seller?.name}</p>
                 {seller?.profession && (
-                  <p className="text-gray-600 text-sm capitalize">{t('buyer.profession')}: {translatedFields.profession || seller.profession}</p>
+                  <p className="text-gray-600 dark:text-slate-400 text-sm capitalize">{t('buyer.profession')}: {translatedFields.profession || seller.profession}</p>
                 )}
                 <div className="flex items-center gap-2 mt-2">
                   <div className="flex items-center gap-1">
@@ -185,12 +187,12 @@ const ProductDetail = () => {
                       <i
                         key={i}
                         className={`fas fa-star text-sm ${
-                          i < Math.round(averageRating) ? 'text-yellow-400' : 'text-gray-300'
+                          i < Math.round(averageRating) ? 'text-yellow-400' : 'text-gray-300 dark:text-slate-600'
                         }`}
                       ></i>
                     ))}
                   </div>
-                  <span className="text-sm text-gray-600">
+                  <span className="text-sm text-gray-600 dark:text-slate-400">
                     ({totalReviews} {totalReviews === 1 ? 'review' : 'reviews'})
                   </span>
                 </div>
@@ -198,22 +200,22 @@ const ProductDetail = () => {
 
               {/* Price and Quantity */}
               <div className="mb-6">
-                <p className="text-gray-600 text-sm mb-2">{t('product.priceUnit') || 'Price per'} {product.unit || 'unit'}</p>
-                <p className="text-3xl font-bold text-emerald-600 mb-4">CFA {parseFloat(product.price)?.toLocaleString() || '0'}</p>
+                <p className="text-gray-600 dark:text-slate-400 text-sm mb-2">{t('product.priceUnit') || 'Price per'} {product.unit || 'unit'}</p>
+                <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400 mb-4">CFA {parseFloat(product.price)?.toLocaleString() || '0'}</p>
 
                 <div className="mb-4">
-                  <p className="text-gray-600 text-sm mb-2">{t('product.availableQty') || 'Available Quantity'}</p>
-                  <p className="text-lg font-semibold text-gray-800">
+                  <p className="text-gray-600 dark:text-slate-400 text-sm mb-2">{t('product.availableQty') || 'Available Quantity'}</p>
+                  <p className="text-lg font-semibold text-gray-800 dark:text-white">
                     {product.quantityAvailable || product.quantity} {product.unit || 'units'} available
                   </p>
                 </div>
 
                 <div className="mb-6">
-                  <label className="block text-gray-600 text-sm mb-2">{t('product.qtyPurchase') || 'Quantity to Purchase'}</label>
+                  <label className="block text-gray-600 dark:text-slate-400 text-sm mb-2">{t('product.qtyPurchase') || 'Quantity to Purchase'}</label>
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                      className="bg-gray-200 text-dark-green px-3 py-2 rounded hover:bg-gray-300"
+                      className="bg-gray-200 dark:bg-slate-700 text-dark-green dark:text-white w-10 h-10 rounded-lg hover:bg-gray-300 dark:hover:bg-slate-600 transition"
                     >
                       -
                     </button>
@@ -221,11 +223,11 @@ const ProductDetail = () => {
                       type="number"
                       value={quantity}
                       onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                      className="w-16 px-3 py-2 border rounded text-center focus:outline-none focus:border-primary-green"
+                      className="w-16 px-3 py-2 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg text-center focus:outline-none focus:border-primary-green dark:focus:border-emerald-500"
                     />
                     <button
                       onClick={() => setQuantity(quantity + 1)}
-                      className="bg-gray-200 text-dark-green px-3 py-2 rounded hover:bg-gray-300"
+                      className="bg-gray-200 dark:bg-slate-700 text-dark-green dark:text-white w-10 h-10 rounded-lg hover:bg-gray-300 dark:hover:bg-slate-600 transition"
                     >
                       +
                     </button>
@@ -252,19 +254,19 @@ const ProductDetail = () => {
 
               {/* Description */}
               <div className="mb-6">
-                <h3 className="font-bold text-dark-green mb-2">{t('product.description') || 'Description'}</h3>
-                <p className="text-gray-700">{translatedFields.description || product.description || t('product.noDescription') || 'No description provided'}</p>
+                <h3 className="font-bold text-dark-green dark:text-emerald-400 mb-2">{t('product.description') || 'Description'}</h3>
+                <p className="text-gray-700 dark:text-slate-300">{translatedFields.description || product.description || t('product.noDescription') || 'No description provided'}</p>
               </div>
 
               {/* Contact Info */}
-              <div className="bg-gray-100 rounded-lg p-4">
-                <p className="text-gray-700 font-medium mb-2">{t('product.contactSeller') || 'Contact Seller'}</p>
+              <div className="bg-gray-100 dark:bg-slate-800 rounded-xl p-4">
+                <p className="text-gray-700 dark:text-slate-200 font-medium mb-2">{t('product.contactSeller') || 'Contact Seller'}</p>
                 {product.whatsapp && (
                   <a
                     href={`https://wa.me/${product.whatsapp}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-emerald-600 hover:text-emerald-700 text-sm flex items-center gap-2"
+                    className="text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 text-sm flex items-center gap-2"
                   >
                     <i className="fab fa-whatsapp"></i>
                     WhatsApp: {product.whatsapp}
@@ -276,23 +278,23 @@ const ProductDetail = () => {
         </div>
 
         {/* Seller Reviews and Actions Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
           {/* Reviews */}
-          <div className="md:col-span-2 bg-white rounded-2xl p-8 shadow-lg">
-            <h2 className="text-2xl font-bold text-dark-green mb-6">{t('product.sellerReviews') || 'Seller Reviews'}</h2>
+          <div className="md:col-span-2 bg-white dark:bg-slate-900 dark:border dark:border-slate-700 rounded-2xl p-5 sm:p-8 shadow-lg">
+            <h2 className="text-2xl font-bold text-dark-green dark:text-emerald-400 mb-6">{t('product.sellerReviews') || 'Seller Reviews'}</h2>
 
             {user && user.role === 'buyer' && (
-              <div className="mb-6 flex gap-3">
+              <div className="mb-6 flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={() => setShowRatingModal(true)}
-                  className="flex-1 bg-primary-green text-white py-2 rounded font-bold hover:bg-dark-green transition"
+                  className="flex-1 bg-primary-green text-white py-2.5 rounded-lg font-bold hover:bg-dark-green transition"
                 >
                   <i className="fas fa-star mr-2"></i>
                   {t('product.leaveReview') || 'Leave a Review'}
                 </button>
                 <button
                   onClick={() => setShowReportModal(true)}
-                  className="flex-1 bg-red-600 text-white py-2 rounded font-bold hover:bg-red-700 transition"
+                  className="flex-1 bg-red-600 text-white py-2.5 rounded-lg font-bold hover:bg-red-700 transition"
                 >
                   <i className="fas fa-flag mr-2"></i>
                   {t('product.reportSeller') || 'Report Seller'}
@@ -301,22 +303,22 @@ const ProductDetail = () => {
             )}
 
             {reviews.length === 0 ? (
-              <div className="text-center py-12 text-gray-500">
+              <div className="text-center py-12 text-gray-500 dark:text-slate-500">
                 <i className="fas fa-comments text-4xl mb-4"></i>
                 <p>{t('product.noReviews') || 'No reviews yet'}</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {reviews.map(review => (
-                  <div key={review.id} className="border-l-4 border-emerald-500 pl-4 py-3 bg-gray-50 rounded">
+                  <div key={review.id} className="border-l-4 border-emerald-500 pl-4 py-3 bg-gray-50 dark:bg-slate-800 rounded-r-lg">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <div className="w-10 h-10 bg-primary-green rounded-full flex items-center justify-center text-white font-bold">
                           {review.buyer?.name?.[0]?.toUpperCase() || 'B'}
                         </div>
                         <div>
-                          <p className="font-semibold text-gray-800">{review.buyer?.name}</p>
-                          <p className="text-xs text-gray-500">{new Date(review.createdAt).toLocaleDateString()}</p>
+                          <p className="font-semibold text-gray-800 dark:text-white">{review.buyer?.name}</p>
+                          <p className="text-xs text-gray-500 dark:text-slate-400">{new Date(review.createdAt).toLocaleDateString()}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
@@ -324,14 +326,14 @@ const ProductDetail = () => {
                           <i
                             key={i}
                             className={`fas fa-star text-sm ${
-                              i < review.rating ? 'text-yellow-400' : 'text-gray-300'
+                              i < review.rating ? 'text-yellow-400' : 'text-gray-300 dark:text-slate-600'
                             }`}
                           ></i>
                         ))}
                       </div>
                     </div>
                     {review.comment && (
-                      <p className="text-gray-700 text-sm">{review.comment}</p>
+                      <p className="text-gray-700 dark:text-slate-300 text-sm">{review.comment}</p>
                     )}
                   </div>
                 ))}
@@ -340,39 +342,39 @@ const ProductDetail = () => {
           </div>
 
           {/* Summary Stats */}
-          <div className="bg-white rounded-2xl p-8 shadow-lg h-fit">
-            <h3 className="text-xl font-bold text-dark-green mb-6">{t('product.sellerSummary') || 'Seller Summary'}</h3>
+          <div className="bg-white dark:bg-slate-900 dark:border dark:border-slate-700 rounded-2xl p-5 sm:p-8 shadow-lg h-fit">
+            <h3 className="text-xl font-bold text-dark-green dark:text-emerald-400 mb-6">{t('product.sellerSummary') || 'Seller Summary'}</h3>
 
             <div className="space-y-4">
-              <div className="text-center pb-4 border-b-2">
+              <div className="text-center pb-4 border-b-2 border-slate-100 dark:border-slate-700">
                 <p className="text-4xl font-bold text-yellow-400">{averageRating.toFixed(1)}</p>
                 <div className="flex items-center justify-center gap-1 my-2">
                   {[...Array(5)].map((_, i) => (
                     <i
                       key={i}
                       className={`fas fa-star text-sm ${
-                        i < Math.round(averageRating) ? 'text-yellow-400' : 'text-gray-300'
+                        i < Math.round(averageRating) ? 'text-yellow-400' : 'text-gray-300 dark:text-slate-600'
                       }`}
                     ></i>
                   ))}
                 </div>
-                <p className="text-sm text-gray-600">{totalReviews} {totalReviews === 1 ? 'review' : 'reviews'}</p>
+                <p className="text-sm text-gray-600 dark:text-slate-400">{totalReviews} {totalReviews === 1 ? 'review' : 'reviews'}</p>
               </div>
 
               <div>
-                <p className="text-gray-600 text-sm mb-1">{t('buyer.seller')}</p>
-                <p className="font-bold text-gray-800">{seller?.name}</p>
+                <p className="text-gray-600 dark:text-slate-400 text-sm mb-1">{t('buyer.seller')}</p>
+                <p className="font-bold text-gray-800 dark:text-white">{seller?.name}</p>
               </div>
 
               {seller?.profession && (
                 <div>
-                  <p className="text-gray-600 text-sm mb-1">{t('buyer.profession')}</p>
-                  <p className="font-bold text-gray-800 capitalize">{seller.profession}</p>
+                  <p className="text-gray-600 dark:text-slate-400 text-sm mb-1">{t('buyer.profession')}</p>
+                  <p className="font-bold text-gray-800 dark:text-white capitalize">{seller.profession}</p>
                 </div>
               )}
 
               <div className="pt-4">
-                <p className="text-xs text-gray-500 text-center">
+                <p className="text-xs text-gray-500 dark:text-slate-500 text-center">
                   {t('product.sellerReviewCount', { count: totalReviews })}
                 </p>
               </div>
